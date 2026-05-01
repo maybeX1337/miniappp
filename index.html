@@ -335,6 +335,7 @@ async function apiCall(endpoint, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (initData) headers['X-Init-Data'] = initData;
   else headers['X-Dev-Mode'] = '1';
+  headers['ngrok-skip-browser-warning'] = 'true';
   const res = await fetch(`${API_URL}${endpoint}`, { ...opts, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Network error' }));
