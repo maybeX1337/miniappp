@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HSE Case Club</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
   --accent: #6B3FF0;
+  --accent-light: #8B5CF6;
   --accent-dim: rgba(107,63,240,0.12);
   --accent-dim2: rgba(107,63,240,0.06);
   --bg: #F4F3FF;
@@ -37,7 +39,14 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .nav-item.active { color: var(--accent); }
 .nav-icon svg { width: 22px; height: 22px; transition: transform .2s; }
 .nav-item.active .nav-icon svg { transform: scale(1.15); }
-.nav-label { font-size: 10px; font-weight: 500; }
+.nav-label { font-size: 10px; font-weight: 500; text-align: center; padding: 0 2px; }
+
+.nav-center { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 4px 0; margin-top: -22px; }
+.nav-center-btn { width: 52px; height: 52px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(107,63,240,0.4); transition: transform .15s; }
+.nav-center-btn:active { transform: scale(0.93); }
+.nav-center-btn svg { width: 24px; height: 24px; color: white; }
+.nav-center .nav-label { color: var(--text-muted); font-size: 10px; font-weight: 500; }
+.nav-center.active .nav-label { color: var(--accent); }
 
 .badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .badge-type { background: var(--accent-dim); color: var(--accent); }
@@ -50,7 +59,9 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-ghost { background: var(--accent-dim); color: var(--accent); }
+.btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
 
+/* ── EVENTS ── */
 .events-header { padding: 16px 20px 8px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
 .events-logo { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 900; color: var(--accent); margin-bottom: 14px; }
 .events-logo span { color: var(--text); }
@@ -86,6 +97,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .event-register-btn { padding: 8px 18px; background: var(--accent); color: white; border: none; border-radius: 50px; font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
 .event-register-btn.registered { background: rgba(16,185,129,0.1); color: var(--success); }
 
+/* ── DETAIL ── */
 .detail-back { display: flex; align-items: center; gap: 6px; padding: 16px 20px; font-size: 14px; color: var(--accent); cursor: pointer; }
 .detail-back svg { width: 18px; height: 18px; }
 .detail-banner { width: 100%; aspect-ratio: 16/8; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; position: relative; overflow: hidden; }
@@ -103,27 +115,106 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .detail-address svg { width: 14px; height: 14px; color: var(--accent); }
 .detail-desc { font-size: 14px; line-height: 1.65; }
 
+/* ── FORM ── */
 .form-header { padding: 20px 20px 0; }
 .form-title { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
 .form-subtitle { font-size: 13px; color: var(--text-sec); line-height: 1.5; }
 .form-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-label { font-size: 12px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; }
-.form-input, .form-select { width: 100%; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; outline: none; }
-.form-input:focus, .form-select:focus { border-color: var(--accent); }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; outline: none; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
 .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%236B7280' stroke-width='2' stroke-linecap='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
+.form-textarea { resize: vertical; min-height: 90px; font-family: 'Onest', sans-serif; }
 
+/* ── TICKET ── */
+#screen-ticket { background: linear-gradient(160deg, #3B0FA0 0%, #6B3FF0 40%, #8B5CF6 100%); min-height: 100vh; }
+.ticket-wrap { padding: 30px 24px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.ticket-logo { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 1px; text-align: center; }
+.ticket-event-name { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; line-height: 1.3; }
+.ticket-card { background: white; border-radius: 24px; padding: 28px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.ticket-avatar { width: 64px; height: 64px; background: var(--accent-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.ticket-avatar svg { width: 36px; height: 36px; color: var(--accent); }
+.ticket-name { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; text-align: center; }
+.ticket-username { font-size: 12px; color: var(--text-sec); margin-top: -10px; }
+.qr-container { width: 180px; height: 180px; padding: 12px; border: 2px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.qr-container canvas { width: 100% !important; height: 100% !important; }
+.qr-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px; }
+.ticket-meta { font-size: 12px; color: var(--text-sec); text-align: center; line-height: 1.6; }
+.ticket-share-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ticket-list { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.ticket-list-title { color: white; font-size: 13px; font-weight: 600; opacity: 0.8; }
+.ticket-pill { background: rgba(255,255,255,0.15); color: white; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
+.ticket-pill.active { background: white; color: var(--accent); font-weight: 600; }
+.ticket-empty-card { background: white; border-radius: 20px; padding: 28px 20px; text-align: center; }
+.ticket-empty-card svg { width: 40px; height: 40px; color: var(--accent); margin-bottom: 10px; }
+.ticket-empty-card-title { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.ticket-empty-card-sub { font-size: 13px; color: var(--text-sec); line-height: 1.5; }
+
+/* ── PROFILE ── */
 .profile-wrap { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 .profile-card { background: var(--card); border-radius: var(--radius); padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 2px 16px rgba(107,63,240,0.07); }
 .profile-avatar { width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), #A855F7); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .profile-avatar svg { width: 44px; height: 44px; color: white; }
-.profile-name { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; }
+.profile-name { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; text-align: center; }
 .profile-username { font-size: 13px; color: var(--text-sec); }
 .profile-section-title { font-size: 16px; font-weight: 700; padding: 4px 4px 8px; }
 .profile-event-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 8px rgba(107,63,240,0.06); display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .profile-event-title { font-size: 14px; font-weight: 600; }
 .profile-event-meta { font-size: 12px; color: var(--text-sec); }
 
+.profile-links { display: flex; flex-direction: column; gap: 8px; }
+.profile-link-item { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; box-shadow: 0 1px 6px rgba(107,63,240,0.05); transition: transform .12s; }
+.profile-link-item:active { transform: scale(0.98); }
+.profile-link-icon { width: 36px; height: 36px; background: var(--accent-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.profile-link-icon svg { width: 18px; height: 18px; color: var(--accent); }
+.profile-link-text { flex: 1; }
+.profile-link-title { font-size: 14px; font-weight: 600; }
+.profile-link-sub { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
+.profile-link-arrow svg { width: 16px; height: 16px; color: var(--text-muted); }
+
+/* ── MEMBERS ── */
+.members-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+.member-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 6px rgba(107,63,240,0.05); }
+.member-ava { width: 42px; height: 42px; background: linear-gradient(135deg, var(--accent), #A855F7); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0; }
+.member-info { flex: 1; min-width: 0; }
+.member-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.member-meta { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+
+/* ── ADMIN ── */
+.admin-wrap { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.admin-header-title { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; }
+.admin-header-sub { font-size: 13px; color: var(--text-sec); margin-top: 4px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-card { background: var(--card); border-radius: var(--radius-sm); padding: 16px; box-shadow: 0 1px 8px rgba(107,63,240,0.06); }
+.stat-num { font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+.admin-actions { display: flex; flex-direction: column; gap: 10px; }
+.admin-action { background: var(--card); border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; box-shadow: 0 1px 8px rgba(107,63,240,0.06); transition: transform .12s; border: none; width: 100%; text-align: left; font-family: 'Onest', sans-serif; }
+.admin-action:active { transform: scale(0.98); }
+.admin-action-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.admin-action-icon.purple { background: var(--accent); }
+.admin-action-icon.green { background: #10B981; }
+.admin-action-icon.amber { background: #F59E0B; }
+.admin-action-icon.blue { background: #3B82F6; }
+.admin-action-icon svg { width: 22px; height: 22px; color: white; }
+.admin-action-title { font-size: 14px; font-weight: 600; }
+.admin-action-sub { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
+.admin-action-arrow { margin-left: auto; }
+.admin-action-arrow svg { width: 16px; height: 16px; color: var(--text-muted); }
+
+.admin-event-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 8px rgba(107,63,240,0.06); display: flex; flex-direction: column; gap: 8px; }
+.admin-event-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.admin-event-title { font-size: 14px; font-weight: 600; }
+.admin-event-meta { font-size: 12px; color: var(--text-sec); }
+.admin-event-stats { display: flex; gap: 14px; padding-top: 4px; border-top: 1px solid var(--border); padding-top: 8px; }
+.admin-event-stat { display: flex; flex-direction: column; gap: 2px; }
+.admin-event-stat-num { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'Unbounded', sans-serif; }
+.admin-event-stat-label { font-size: 10px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.3px; }
+.admin-event-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-event-btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 50px; font-size: 11px; font-weight: 600; background: var(--accent-dim2); color: var(--accent); cursor: pointer; font-family: 'Onest', sans-serif; }
+
+/* ── OVERLAYS ── */
 .overlay { position: fixed; inset: 0; background: rgba(26,16,51,0.6); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s; backdrop-filter: blur(4px); }
 .overlay.show { opacity: 1; pointer-events: all; }
 .overlay-card { background: var(--card); border-radius: 24px; padding: 32px 24px; text-align: center; width: 100%; transform: scale(0.92); transition: transform .2s; }
@@ -151,10 +242,13 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+.section-pad { padding: 16px 20px 8px; font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; }
 </style>
 </head>
 <body>
 
+<!-- ── EVENTS ── -->
 <div id="screen-events" class="screen active">
   <div class="events-header">
     <div class="events-logo">HSE <span>CASE</span> CLUB</div>
@@ -175,6 +269,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
+<!-- ── DETAIL ── -->
 <div id="screen-detail" class="screen">
   <div class="detail-back" onclick="showScreen('events')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
@@ -213,6 +308,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
+<!-- ── REGISTRATION FORM ── -->
 <div id="screen-register" class="screen">
   <div class="detail-back" onclick="showScreen('detail')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
@@ -265,6 +361,22 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
+<!-- ── TICKET ── -->
+<div id="screen-ticket" class="screen">
+  <div class="ticket-wrap" id="ticketWrap">
+    <div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text" style="color:white;">Загружаем билеты...</div></div>
+  </div>
+</div>
+
+<!-- ── MEMBERS ── -->
+<div id="screen-members" class="screen">
+  <div class="section-pad">Участники сообщества</div>
+  <div class="members-list" id="membersList">
+    <div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Загружаем участников...</div></div>
+  </div>
+</div>
+
+<!-- ── PROFILE ── -->
 <div id="screen-profile" class="screen">
   <div class="profile-wrap">
     <div class="profile-card">
@@ -275,31 +387,83 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
       <div class="profile-username" id="profileUsername">—</div>
     </div>
     <div>
-      <div class="profile-section-title">Ваши мероприятия</div>
+      <div class="profile-section-title">Ваши ближайшие мероприятия</div>
       <div id="profileEvents">
         <div style="font-size:13px;color:var(--text-sec);">Загружаем...</div>
       </div>
     </div>
+    <div class="profile-links">
+      <a class="profile-link-item" href="https://t.me/case_club_support" target="_blank" style="text-decoration:none;color:inherit;">
+        <div class="profile-link-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg></div>
+        <div class="profile-link-text">
+          <div class="profile-link-title">Поддержка</div>
+          <div class="profile-link-sub">Написать организаторам</div>
+        </div>
+        <div class="profile-link-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
+      </a>
+    </div>
   </div>
 </div>
 
-<nav class="bottom-nav">
-  <div class="nav-item active" id="nav-events" onclick="showScreen('events'); setNav(this)">
-    <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-    <span class="nav-label">Мероприятия</span>
+<!-- ── ADMIN ── -->
+<div id="screen-admin" class="screen">
+  <div class="admin-wrap">
+    <div>
+      <div class="admin-header-title">Панель организатора</div>
+      <div class="admin-header-sub">Управление мероприятиями</div>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Загрузка...</div></div>
+    </div>
+    <div class="admin-actions">
+      <button class="admin-action" onclick="showAdminEvents()">
+        <div class="admin-action-icon purple">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="admin-action-title">Мероприятия и Excel</div>
+          <div class="admin-action-sub">Список, статистика, выгрузка пропусков</div>
+        </div>
+        <div class="admin-action-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+      <button class="admin-action" onclick="alert('Создать мероприятие можно через бота: команда /start → ⚙️ Управление → ➕ Создать')">
+        <div class="admin-action-icon green">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div>
+          <div class="admin-action-title">Создать мероприятие</div>
+          <div class="admin-action-sub">Через бота — пошаговый мастер</div>
+        </div>
+        <div class="admin-action-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+    </div>
   </div>
-  <div class="nav-item" id="nav-profile" onclick="showScreen('profile'); setNav(this); loadProfile()">
-    <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-    <span class="nav-label">Профиль</span>
+</div>
+
+<!-- ── ADMIN EVENTS LIST ── -->
+<div id="screen-admin-events" class="screen">
+  <div class="detail-back" onclick="showScreen('admin'); setNav(document.getElementById('nav-admin'))">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+    Назад в админку
   </div>
+  <div class="section-pad">Все мероприятия</div>
+  <div class="admin-wrap" id="adminEventsList" style="padding-top:0;">
+    <div class="loading-screen"><div class="loading-spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav" id="bottomNav">
+  <!-- наполнение через JS -->
 </nav>
 
+<!-- ── OVERLAYS ── -->
 <div class="overlay" id="successOverlay">
   <div class="overlay-card">
     <div class="overlay-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
     <div class="overlay-title">Вы зарегистрированы!</div>
-    <div class="overlay-sub">QR-билет отправлен в бота 🎫<br>Покажите его на входе</div>
-    <button class="overlay-btn" onclick="closeOverlay()">Готово</button>
+    <div class="overlay-sub">QR-билет отправлен в бота 🎫<br>Вы также можете найти его во вкладке «Билет»</div>
+    <button class="overlay-btn" onclick="closeOverlayAndOpenTicket()">Открыть билет</button>
   </div>
 </div>
 
@@ -313,15 +477,18 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 </div>
 
 <script>
-// ⚠️ ВАЖНО: укажи URL твоего API
+// ⚠️ ВАЖНО: укажи URL твоего ngrok / задеплоенного API
 const API_URL = 'https://extradite-entering-remover.ngrok-free.dev';
 
 let allEvents = [];
 let currentEvent = null;
 let currentTab = 'upcoming';
 let myRegistrations = new Set();
+let myRegList = [];
 let tgUser = null;
 let initData = '';
+let isAdmin = false;
+let currentTicketId = null;
 
 if (window.Telegram && window.Telegram.WebApp) {
   const tg = window.Telegram.WebApp;
@@ -331,6 +498,7 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 if (!tgUser) tgUser = { id: 12345, first_name: 'Test', last_name: 'User', username: 'test' };
 
+// ── API ──
 async function apiCall(endpoint, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (initData) headers['X-Init-Data'] = initData;
@@ -344,27 +512,90 @@ async function apiCall(endpoint, opts = {}) {
   return res.json();
 }
 
-async function loadEvents() {
-  try {
-    const data = await apiCall('/api/events');
-    allEvents = data.events;
-    try {
-      const myData = await apiCall('/api/my/registrations');
-      myRegistrations = new Set(myData.registrations.map(r => r.event_id));
-    } catch (e) { myRegistrations = new Set(); }
-    renderEvents();
-  } catch (e) {
-    document.getElementById('eventsList').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        </div>
-        <div class="empty-title">Не удалось загрузить</div>
-        <div class="empty-sub">${e.message}<br><br>Проверьте что API сервер запущен и URL правильный.</div>
-      </div>`;
+// ── NAV BUILDER (адаптирует меню под роль) ──
+function buildNav() {
+  const nav = document.getElementById('bottomNav');
+  if (isAdmin) {
+    // 5 пунктов: Мероприятия, Билет, [Управление центр], Участники, Профиль
+    nav.innerHTML = `
+      <div class="nav-item active" id="nav-events" onclick="navigate('events', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <span class="nav-label">События</span>
+      </div>
+      <div class="nav-item" id="nav-ticket" onclick="navigate('ticket', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg></div>
+        <span class="nav-label">Билет</span>
+      </div>
+      <div class="nav-center" id="nav-admin" onclick="navigate('admin', this)">
+        <div class="nav-center-btn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <span class="nav-label">Управление</span>
+      </div>
+      <div class="nav-item" id="nav-members" onclick="navigate('members', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+        <span class="nav-label">Участники</span>
+      </div>
+      <div class="nav-item" id="nav-profile" onclick="navigate('profile', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <span class="nav-label">Профиль</span>
+      </div>
+    `;
+  } else {
+    // 4 пункта: Мероприятия, Билет, Участники, Профиль
+    nav.innerHTML = `
+      <div class="nav-item active" id="nav-events" onclick="navigate('events', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <span class="nav-label">Мероприятия</span>
+      </div>
+      <div class="nav-item" id="nav-ticket" onclick="navigate('ticket', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg></div>
+        <span class="nav-label">Билет</span>
+      </div>
+      <div class="nav-item" id="nav-members" onclick="navigate('members', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+        <span class="nav-label">Участники</span>
+      </div>
+      <div class="nav-item" id="nav-profile" onclick="navigate('profile', this)">
+        <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <span class="nav-label">Профиль</span>
+      </div>
+    `;
   }
 }
 
+function navigate(name, el) {
+  setNav(el);
+  showScreen(name);
+  if (name === 'ticket') loadTickets();
+  if (name === 'profile') loadProfile();
+  if (name === 'members') loadMembers();
+  if (name === 'admin') loadAdminStats();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+}
+function setNav(el) {
+  if (!el) return;
+  document.querySelectorAll('.nav-item, .nav-center').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── INIT ──
+async function init() {
+  // Получаем профиль чтобы понять admin или нет
+  try {
+    const me = await apiCall('/api/me');
+    isAdmin = !!me.is_admin;
+  } catch (e) {
+    isAdmin = false;
+  }
+  buildNav();
+  await loadEvents();
+}
+
+// ── EVENTS ──
 const BANNER_COLORS = [
   { c1: '#3B0FA0', c2: '#6B3FF0', accent: '#C4F135' },
   { c1: '#065F46', c2: '#059669', accent: '#FDE68A' },
@@ -380,13 +611,24 @@ function shortTitle(t) {
   return words.slice(0, m).join(' ').toUpperCase() + '\n' + words.slice(m).join(' ').toUpperCase();
 }
 
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-}
-function setNav(el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
+async function loadEvents() {
+  try {
+    const data = await apiCall('/api/events');
+    allEvents = data.events;
+    try {
+      const myData = await apiCall('/api/my/registrations');
+      myRegList = myData.registrations;
+      myRegistrations = new Set(myRegList.map(r => r.event_id));
+    } catch (e) { myRegistrations = new Set(); myRegList = []; }
+    renderEvents();
+  } catch (e) {
+    document.getElementById('eventsList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
+        <div class="empty-title">Не удалось загрузить</div>
+        <div class="empty-sub">${e.message}</div>
+      </div>`;
+  }
 }
 
 function renderEvents() {
@@ -395,9 +637,7 @@ function renderEvents() {
   if (!filtered.length) {
     list.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
-        </div>
+        <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></div>
         <div class="empty-title">${currentTab === 'upcoming' ? 'Пока нет предстоящих мероприятий' : 'Прошедших мероприятий нет'}</div>
         <div class="empty-sub">Следите за анонсами в боте</div>
       </div>`;
@@ -411,12 +651,7 @@ function renderEvents() {
     return `
     <div class="event-card" onclick="openEvent(${ev.id})">
       <div class="event-banner-placeholder" style="background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)">
-        <div class="event-banner-bg">
-          <svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08">
-            <circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/>
-            <circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/>
-          </svg>
-        </div>
+        <div class="event-banner-bg"><svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08"><circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/><circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/></svg></div>
         <div class="event-banner-text">
           <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(ev.title)}</div>
           <div class="event-banner-sub">HSE × CASE CLUB</div>
@@ -426,18 +661,12 @@ function renderEvents() {
         <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
           <span class="badge badge-type">${ev.type}</span>
           ${isPast ? '<span class="badge badge-done">Прошло</span>' : pct >= 90 ? '<span class="badge badge-soon">Почти нет мест</span>' : ''}
-          ${isReg ? '<span class="badge badge-registered">✓ Вы записаны</span>' : ''}
+          ${isReg ? '<span class="badge badge-registered">✓ Записаны</span>' : ''}
         </div>
         <div class="event-title">${ev.title}</div>
         <div class="event-meta">
-          <div class="event-meta-pill">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            ${ev.date_display || ev.date}
-          </div>
-          <div class="event-meta-pill">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            ${ev.time}
-          </div>
+          <div class="event-meta-pill"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${ev.date_display || ev.date}</div>
+          <div class="event-meta-pill"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${ev.time}</div>
         </div>
         <div class="event-desc">${(ev.description || '').substring(0, 100)}${ev.description && ev.description.length > 100 ? '...' : ''}</div>
         <span class="event-more">Подробнее →</span>
@@ -471,13 +700,11 @@ async function openEvent(id) {
     const ev = await apiCall(`/api/events/${id}`);
     currentEvent = ev;
     const colors = getColors(ev.id);
-    document.getElementById('detailBannerBg').style.cssText =
-      `position:absolute;inset:0;background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
+    document.getElementById('detailBannerBg').style.cssText = `position:absolute;inset:0;background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
     document.getElementById('detailBannerTitle').textContent = shortTitle(ev.title).replace('\n', ' ');
     document.getElementById('detailBannerTitle').style.color = colors.accent;
     document.getElementById('detailDate').textContent = ev.date_display || ev.date;
     document.getElementById('detailTime').textContent = ev.time;
-
     if (ev.speaker) {
       document.getElementById('detailSpeakerBlock').style.display = 'flex';
       document.getElementById('detailSpeaker').textContent = ev.speaker;
@@ -492,12 +719,11 @@ async function openEvent(id) {
       document.getElementById('detailAddressBlock').style.display = 'none';
     }
     document.getElementById('detailDesc').textContent = ev.description || '';
-
     const wrap = document.getElementById('detailRegisterWrap');
     const isReg = myRegistrations.has(id);
     const isPast = ev.status === 'past';
     if (isPast) wrap.innerHTML = `<button class="btn btn-ghost">Мероприятие завершено</button>`;
-    else if (isReg) wrap.innerHTML = `<button class="btn btn-ghost">✓ Вы зарегистрированы</button>`;
+    else if (isReg) wrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">🎫 Открыть билет</button>`;
     else if (ev.registered >= ev.seats) wrap.innerHTML = `<button class="btn btn-ghost">😔 Мест нет</button>`;
     else wrap.innerHTML = `<button class="btn btn-primary" onclick="openRegistration()">Зарегистрироваться</button>`;
     showScreen('detail');
@@ -517,7 +743,6 @@ async function submitRegistration() {
   const email = document.getElementById('fieldEmail').value.trim();
   if (!name || !uni || !email) { showError('Заполните все поля'); return; }
   if (!email.includes('@')) { showError('Введите корректный email'); return; }
-
   const btn = document.getElementById('submitBtn');
   btn.innerHTML = '<div class="spinner"></div>';
   btn.disabled = true;
@@ -529,12 +754,8 @@ async function submitRegistration() {
     myRegistrations.add(currentEvent.id);
     document.getElementById('successOverlay').classList.add('show');
     await loadEvents();
-  } catch (e) {
-    showError(e.message);
-  } finally {
-    btn.innerHTML = 'Зарегистрироваться';
-    btn.disabled = false;
-  }
+  } catch (e) { showError(e.message); }
+  finally { btn.innerHTML = 'Зарегистрироваться'; btn.disabled = false; }
 }
 
 function showError(msg) {
@@ -546,7 +767,95 @@ function closeOverlay() {
   showScreen('events');
   setNav(document.getElementById('nav-events'));
 }
+function closeOverlayAndOpenTicket() {
+  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
+  navigate('ticket', document.getElementById('nav-ticket'));
+}
 
+// ── TICKETS (билеты на мероприятия) ──
+async function loadTickets() {
+  const wrap = document.getElementById('ticketWrap');
+  try {
+    const data = await apiCall('/api/my/registrations');
+    myRegList = data.registrations;
+    if (!myRegList.length) {
+      wrap.innerHTML = `
+        <div class="ticket-logo">HSE × CASE CLUB</div>
+        <div class="ticket-empty-card">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+          <div class="ticket-empty-card-title">Билетов пока нет</div>
+          <div class="ticket-empty-card-sub">Зарегистрируйтесь на мероприятие — билет появится здесь и придёт в бота</div>
+        </div>`;
+      return;
+    }
+
+    // Берём первый билет по умолчанию
+    if (!currentTicketId || !myRegList.find(r => r.event_id === currentTicketId)) {
+      currentTicketId = myRegList[0].event_id;
+    }
+    const ticket = myRegList.find(r => r.event_id === currentTicketId);
+
+    wrap.innerHTML = `
+      <div class="ticket-logo">HSE × CASE CLUB</div>
+      <div class="ticket-event-name">${ticket.title}</div>
+      <div class="ticket-card">
+        <div class="ticket-avatar">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="ticket-name">${ticket.full_name}</div>
+        <div class="ticket-username">${tgUser.username ? '@' + tgUser.username : ''}</div>
+        <div class="qr-container"><div id="qrTarget"></div></div>
+        <div class="ticket-meta">${ticket.university}${ticket.course ? ' · ' + ticket.course + ' курс' : ''}<br>📅 ${ticket.date} · 🕐 ${ticket.time}</div>
+      </div>
+      ${myRegList.length > 1 ? `
+      <div class="ticket-list">
+        <div class="ticket-list-title">Все мои билеты</div>
+        ${myRegList.map(r => `
+          <div class="ticket-pill ${r.event_id === currentTicketId ? 'active' : ''}" onclick="switchTicket(${r.event_id})">
+            <span>${r.title.substring(0, 32)}${r.title.length > 32 ? '...' : ''}</span>
+            <span style="font-size:11px;opacity:0.7;">${r.date}</span>
+          </div>
+        `).join('')}
+      </div>` : ''}
+    `;
+
+    // Генерируем QR
+    const qrData = `HSE_CC|${tgUser.id}|${ticket.event_id}|${ticket.qr_token}`;
+    new QRCode(document.getElementById('qrTarget'), {
+      text: qrData, width: 156, height: 156,
+      colorDark: '#1A1033', colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (e) {
+    wrap.innerHTML = `<div class="ticket-empty-card"><div class="ticket-empty-card-title">Ошибка</div><div class="ticket-empty-card-sub">${e.message}</div></div>`;
+  }
+}
+
+function switchTicket(id) {
+  currentTicketId = id;
+  loadTickets();
+}
+
+// ── MEMBERS ──
+async function loadMembers() {
+  const list = document.getElementById('membersList');
+  // Пока берём из регистраций — это участники сообщества клуба
+  try {
+    const data = await apiCall('/api/events');
+    // Собираем уникальных регистрировавшихся через события
+    // Для простоты — показываем что в сообществе пока что
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+        <div class="empty-title">Участники клуба</div>
+        <div class="empty-sub">Скоро здесь появится лента участников и нетворкинг</div>
+      </div>`;
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-title">Ошибка</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+// ── PROFILE ──
 async function loadProfile() {
   try {
     const data = await apiCall('/api/me');
@@ -567,12 +876,95 @@ async function loadProfile() {
         </div>`).join('');
     }
   } catch (e) {
-    document.getElementById('profileEvents').innerHTML =
-      `<div style="color:var(--danger);font-size:13px;">Ошибка: ${e.message}</div>`;
+    document.getElementById('profileEvents').innerHTML = `<div style="color:var(--danger);font-size:13px;">Ошибка: ${e.message}</div>`;
   }
 }
 
-loadEvents();
+// ── ADMIN ──
+async function loadAdminStats() {
+  try {
+    const data = await apiCall('/api/admin/stats');
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${data.total_users}</div><div class="stat-label">Всего пользователей</div></div>
+      <div class="stat-card"><div class="stat-num">${data.upcoming_events}</div><div class="stat-label">Активных событий</div></div>
+      <div class="stat-card"><div class="stat-num">${data.total_registrations}</div><div class="stat-label">Регистраций</div></div>
+      <div class="stat-card"><div class="stat-num">${data.external_guests}</div><div class="stat-label">Внешних гостей</div></div>
+    `;
+  } catch (e) {
+    document.getElementById('statsGrid').innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label" style="color:var(--danger);">${e.message}</div></div>`;
+  }
+}
+
+async function showAdminEvents() {
+  showScreen('admin-events');
+  const list = document.getElementById('adminEventsList');
+  list.innerHTML = '<div class="loading-screen"><div class="loading-spinner"></div></div>';
+  try {
+    const data = await apiCall('/api/admin/events');
+    if (!data.events.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-title">Мероприятий пока нет</div><div class="empty-sub">Создайте первое через бота</div></div>';
+      return;
+    }
+    list.innerHTML = data.events.map(ev => `
+      <div class="admin-event-card">
+        <div class="admin-event-header">
+          <div>
+            <div class="admin-event-title">${ev.title}</div>
+            <div class="admin-event-meta">${ev.date_display} в ${ev.time} · ${ev.type}</div>
+          </div>
+          <span class="badge ${ev.status === 'past' ? 'badge-done' : 'badge-type'}">${ev.status === 'past' ? 'Прошло' : 'Активно'}</span>
+        </div>
+        <div class="admin-event-stats">
+          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.registered}</div><div class="admin-event-stat-label">Записались</div></div>
+          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.external_guests}</div><div class="admin-event-stat-label">Внешних</div></div>
+          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.seats - ev.registered}</div><div class="admin-event-stat-label">Мест свободно</div></div>
+        </div>
+        <div class="admin-event-actions">
+          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, false)">📥 Excel пропуска</button>
+          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, true)">📥 Excel все</button>
+          ${ev.status !== 'past' ? `<button class="admin-event-btn" onclick="broadcastEvent(${ev.id}, '${ev.title.replace(/'/g, '')}')">📢 Анонс</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-title">Ошибка</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+async function exportExcel(eventId, allGuests) {
+  try {
+    const url = `${API_URL}/api/admin/events/${eventId}/excel?all_guests=${allGuests}`;
+    const headers = {};
+    if (initData) headers['X-Init-Data'] = initData;
+    else headers['X-Dev-Mode'] = '1';
+    headers['ngrok-skip-browser-warning'] = 'true';
+
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Ошибка скачивания' }));
+      throw new Error(err.detail);
+    }
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'export.xlsx';
+    link.click();
+
+    if (window.Telegram?.WebApp?.showAlert) {
+      window.Telegram.WebApp.showAlert('Файл скачан!');
+    }
+  } catch (e) { showError(e.message); }
+}
+
+async function broadcastEvent(eventId, title) {
+  if (!confirm(`Разослать анонс «${title}» всем пользователям бота?`)) return;
+  try {
+    const data = await apiCall(`/api/admin/broadcast/${eventId}`, { method: 'POST' });
+    alert(`✅ Рассылка завершена!\nОтправлено: ${data.sent}\nНе доставлено: ${data.failed}`);
+  } catch (e) { showError(e.message); }
+}
+
+init();
 </script>
 </body>
 </html>
