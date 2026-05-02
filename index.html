@@ -845,9 +845,62 @@ function shortTitle(t) {
   return words.slice(0, m).join(' ').toUpperCase() + '\n' + words.slice(m).join(' ').toUpperCase();
 }
 
+// ── BANNER LOADER (обход ngrok-warning через fetch+blob) ──
+const bannerCache = new Map();
+async function loadBannerBlob(url) {
+  if (!url) return null;
+  if (bannerCache.has(url)) return bannerCache.get(url);
+  try {
+    const res = await fetch(url, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    if (!res.ok) throw new Error('not ok');
+    const blob = await res.blob();
+    if (!blob.type.startsWith('image/')) throw new Error('not image');
+    const blobUrl = URL.createObjectURL(blob);
+    bannerCache.set(url, blobUrl);
+    return blobUrl;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function applyBanners(scope = document) {
+  const imgs = scope.querySelectorAll('img[data-banner-src]');
+  for (const img of imgs) {
+    const src = img.getAttribute('data-banner-src');
+    const blobUrl = await loadBannerBlob(src);
+    if (blobUrl) {
+      img.src = blobUrl;
+      img.removeAttribute('data-banner-src');
+    } else {
+      // Fallback — заменяем картинку на градиентную плашку
+      const id = parseInt(img.getAttribute('data-event-id') || '0', 10);
+      const colors = getColors(id);
+      const title = img.getAttribute('alt') || '';
+      const placeholder = document.createElement('div');
+      placeholder.className = img.classList.contains('detail-banner-photo') ? 'detail-banner' : 'event-banner';
+      placeholder.style.cssText = `background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
+      placeholder.innerHTML = `
+        <div class="event-banner-bg-shapes">
+          <svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08">
+            <circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/>
+            <circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/>
+          </svg>
+        </div>
+        <div class="event-banner-text">
+          <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(title)}</div>
+          <div class="event-banner-sub">HSE × CASE CLUB</div>
+        </div>`;
+      img.replaceWith(placeholder);
+    }
+  }
+}
+
 function bannerHTML(ev, sizeClass = '') {
   if (ev.banner_url) {
-    return `<img class="event-banner-photo" src="${ev.banner_url}" alt="${ev.title}">`;
+    // data-banner-src — потом подменяется через fetch+blob
+    return `<img class="event-banner-photo" data-banner-src="${ev.banner_url}" data-event-id="${ev.id}" alt="${ev.title}">`;
   }
   const colors = getColors(ev.id);
   return `
@@ -925,6 +978,7 @@ function renderEvents() {
       </div>
     </div>`;
   }).join('');
+  applyBanners(list);
 }
 
 function switchTab(el, tab) {
@@ -949,7 +1003,8 @@ async function openEvent(id) {
     // Banner
     const wrap = document.getElementById('detailBannerWrap');
     if (ev.banner_url) {
-      wrap.innerHTML = `<img class="detail-banner-photo" src="${ev.banner_url}" alt="${ev.title}">`;
+      wrap.innerHTML = `<img class="detail-banner-photo" data-banner-src="${ev.banner_url}" data-event-id="${ev.id}" alt="${ev.title}">`;
+      applyBanners(wrap);
     } else {
       const colors = getColors(ev.id);
       wrap.innerHTML = `
