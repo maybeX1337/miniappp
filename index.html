@@ -730,13 +730,18 @@ function setNav(el) {
 
 // ── INIT ──
 async function init() {
+  // Сразу показываем loader на экране событий, чтобы юзер не видел пустоту
+  const eventsList = document.getElementById('eventsList');
+  if (eventsList) {
+    eventsList.innerHTML = '<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Загружаем мероприятия...</div></div>';
+  }
+
   try {
     const me = await apiCall('/api/me');
     isAdmin = !!me.is_admin;
     myProfile = me.user || null;
     if (me.needs_onboarding) {
       showScreen('onboarding');
-      // Префилл из TG
       document.getElementById('onbName').value =
         ((tgUser.first_name || '') + ' ' + (tgUser.last_name || '')).trim();
       return;
@@ -744,8 +749,15 @@ async function init() {
   } catch (e) {
     isAdmin = false;
   }
+
   buildNav();
   await loadEvents();
+
+  // Подстраховка: гарантируем перерисовку после того как браузер прорисовал кадр.
+  // Это фикс ситуации когда events на первом запуске иногда не отображаются.
+  requestAnimationFrame(() => {
+    if (allEvents.length > 0) renderEvents();
+  });
 }
 
 // ── ONBOARDING / EDIT PROFILE ──
