@@ -753,11 +753,10 @@ async function init() {
   buildNav();
   await loadEvents();
 
-  // Подстраховка: гарантируем перерисовку после того как браузер прорисовал кадр.
-  // Это фикс ситуации когда events на первом запуске иногда не отображаются.
-  requestAnimationFrame(() => {
-    if (allEvents.length > 0) renderEvents();
-  });
+  // Принудительно показываем экран events после инициализации
+  // (на случай если class="active" слетел)
+  showScreen('events');
+  setNav(document.getElementById('nav-events'));
 }
 
 // ── ONBOARDING / EDIT PROFILE ──
