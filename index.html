@@ -33,8 +33,10 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 .screen { position: fixed; inset: 0; overflow-y: auto; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); opacity: 0; pointer-events: none; transform: translateY(12px); transition: opacity .22s, transform .22s; }
 .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+.screen.no-nav { padding-bottom: 16px; }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom)); background: var(--card); border-top: 1px solid var(--border); display: flex; padding-top: 10px; z-index: 100; }
+.bottom-nav.hidden { display: none; }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: var(--text-muted); transition: color .15s; padding: 4px 0; }
 .nav-item.active { color: var(--accent); }
 .nav-icon svg { width: 22px; height: 22px; transition: transform .2s; }
@@ -50,7 +52,6 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 .badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .badge-type { background: var(--accent-dim); color: var(--accent); }
-.badge-soon { background: rgba(245,158,11,0.12); color: var(--warn); }
 .badge-done { background: rgba(16,185,129,0.1); color: var(--success); }
 .badge-registered { background: rgba(16,185,129,0.12); color: var(--success); }
 
@@ -60,6 +61,9 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .btn-primary { background: var(--accent); color: white; }
 .btn-ghost { background: var(--accent-dim); color: var(--accent); }
 .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+.btn-secondary { background: var(--card); border: 1.5px solid var(--border); color: var(--text); }
+
+.section-pad { padding: 16px 20px 8px; font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; }
 
 /* ── EVENTS ── */
 .events-header { padding: 16px 20px 8px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
@@ -79,11 +83,12 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .event-card { background: var(--card); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform .15s; box-shadow: 0 2px 16px rgba(107,63,240,0.07); }
 .event-card:active { transform: scale(0.98); }
 
-.event-banner-placeholder { width: 100%; aspect-ratio: 16/7; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; position: relative; overflow: hidden; }
-.event-banner-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; }
+.event-banner { width: 100%; aspect-ratio: 16/7; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; position: relative; overflow: hidden; background-size: cover; background-position: center; }
+.event-banner-bg-shapes { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; }
 .event-banner-text { position: relative; z-index: 1; }
 .event-banner-title { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 900; line-height: 1.1; text-transform: uppercase; }
 .event-banner-sub { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.75); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.event-banner-photo { width: 100%; aspect-ratio: 16/7; object-fit: cover; display: block; }
 
 .event-body { padding: 14px 16px 16px; }
 .event-title { font-size: 15px; font-weight: 600; line-height: 1.35; margin-bottom: 10px; }
@@ -101,6 +106,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .detail-back { display: flex; align-items: center; gap: 6px; padding: 16px 20px; font-size: 14px; color: var(--accent); cursor: pointer; }
 .detail-back svg { width: 18px; height: 18px; }
 .detail-banner { width: 100%; aspect-ratio: 16/8; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; position: relative; overflow: hidden; }
+.detail-banner-photo { width: 100%; aspect-ratio: 16/8; object-fit: cover; display: block; }
 .detail-banner-title { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; text-transform: uppercase; line-height: 1.05; position: relative; z-index: 1; }
 .detail-content { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 .detail-info-row { display: flex; gap: 10px; }
@@ -122,10 +128,16 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .form-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-label { font-size: 12px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; }
-.form-input, .form-select, .form-textarea { width: 100%; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; outline: none; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; outline: none; transition: border-color .15s; }
 .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-input.error, .form-select.error { border-color: var(--danger); }
+.form-error { font-size: 12px; color: var(--danger); margin-top: 4px; min-height: 14px; }
 .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%236B7280' stroke-width='2' stroke-linecap='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
-.form-textarea { resize: vertical; min-height: 90px; font-family: 'Onest', sans-serif; }
+.form-hint { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.confirm-block { background: var(--card); border-radius: var(--radius-sm); padding: 16px; box-shadow: 0 1px 6px rgba(107,63,240,0.06); display: flex; flex-direction: column; gap: 8px; }
+.confirm-row { display: flex; justify-content: space-between; gap: 12px; }
+.confirm-label { font-size: 12px; color: var(--text-sec); }
+.confirm-value { font-size: 14px; font-weight: 600; text-align: right; }
 
 /* ── TICKET ── */
 #screen-ticket { background: linear-gradient(160deg, #3B0FA0 0%, #6B3FF0 40%, #8B5CF6 100%); min-height: 100vh; }
@@ -139,9 +151,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .ticket-username { font-size: 12px; color: var(--text-sec); margin-top: -10px; }
 .qr-container { width: 180px; height: 180px; padding: 12px; border: 2px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 .qr-container canvas { width: 100% !important; height: 100% !important; }
-.qr-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px; }
 .ticket-meta { font-size: 12px; color: var(--text-sec); text-align: center; line-height: 1.6; }
-.ticket-share-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ticket-list { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .ticket-list-title { color: white; font-size: 13px; font-weight: 600; opacity: 0.8; }
 .ticket-pill { background: rgba(255,255,255,0.15); color: white; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
@@ -158,13 +168,25 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .profile-avatar svg { width: 44px; height: 44px; color: white; }
 .profile-name { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; text-align: center; }
 .profile-username { font-size: 13px; color: var(--text-sec); }
+.profile-edit-btn { padding: 10px 28px; background: var(--accent); color: white; border: none; border-radius: 50px; font-family: 'Onest', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; }
 .profile-section-title { font-size: 16px; font-weight: 700; padding: 4px 4px 8px; }
-.profile-event-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 8px rgba(107,63,240,0.06); display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.profile-event-title { font-size: 14px; font-weight: 600; }
-.profile-event-meta { font-size: 12px; color: var(--text-sec); }
+
+.upcoming-card { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%); border-radius: var(--radius); padding: 20px; color: white; box-shadow: 0 4px 20px rgba(107,63,240,0.25); }
+.upcoming-countdown { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.85; margin-bottom: 6px; font-weight: 600; }
+.upcoming-title { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; line-height: 1.3; margin-bottom: 14px; }
+.upcoming-meta-row { display: flex; gap: 8px; }
+.upcoming-meta-pill { background: rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(10px); }
+.upcoming-meta-pill svg { width: 14px; height: 14px; }
+.upcoming-address { font-size: 13px; opacity: 0.9; margin-top: 8px; padding: 0 2px; }
+
+.profile-info-list { background: var(--card); border-radius: var(--radius-sm); padding: 4px 16px; box-shadow: 0 1px 6px rgba(107,63,240,0.05); }
+.profile-info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.profile-info-row:last-child { border-bottom: none; }
+.profile-info-label { font-size: 13px; color: var(--text-sec); flex-shrink: 0; }
+.profile-info-value { font-size: 13px; font-weight: 600; text-align: right; word-break: break-word; }
 
 .profile-links { display: flex; flex-direction: column; gap: 8px; }
-.profile-link-item { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; box-shadow: 0 1px 6px rgba(107,63,240,0.05); transition: transform .12s; }
+.profile-link-item { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; box-shadow: 0 1px 6px rgba(107,63,240,0.05); transition: transform .12s; text-decoration: none; color: inherit; }
 .profile-link-item:active { transform: scale(0.98); }
 .profile-link-icon { width: 36px; height: 36px; background: var(--accent-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .profile-link-icon svg { width: 18px; height: 18px; color: var(--accent); }
@@ -174,12 +196,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .profile-link-arrow svg { width: 16px; height: 16px; color: var(--text-muted); }
 
 /* ── MEMBERS ── */
-.members-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
-.member-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 6px rgba(107,63,240,0.05); }
-.member-ava { width: 42px; height: 42px; background: linear-gradient(135deg, var(--accent), #A855F7); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0; }
-.member-info { flex: 1; min-width: 0; }
-.member-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.member-meta { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+.members-list { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
 
 /* ── ADMIN ── */
 .admin-wrap { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -196,7 +213,6 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .admin-action-icon.purple { background: var(--accent); }
 .admin-action-icon.green { background: #10B981; }
 .admin-action-icon.amber { background: #F59E0B; }
-.admin-action-icon.blue { background: #3B82F6; }
 .admin-action-icon svg { width: 22px; height: 22px; color: white; }
 .admin-action-title { font-size: 14px; font-weight: 600; }
 .admin-action-sub { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
@@ -207,12 +223,20 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .admin-event-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .admin-event-title { font-size: 14px; font-weight: 600; }
 .admin-event-meta { font-size: 12px; color: var(--text-sec); }
-.admin-event-stats { display: flex; gap: 14px; padding-top: 4px; border-top: 1px solid var(--border); padding-top: 8px; }
+.admin-event-stats { display: flex; gap: 14px; padding-top: 8px; border-top: 1px solid var(--border); }
 .admin-event-stat { display: flex; flex-direction: column; gap: 2px; }
 .admin-event-stat-num { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'Unbounded', sans-serif; }
 .admin-event-stat-label { font-size: 10px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.3px; }
 .admin-event-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .admin-event-btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 50px; font-size: 11px; font-weight: 600; background: var(--accent-dim2); color: var(--accent); cursor: pointer; font-family: 'Onest', sans-serif; }
+
+/* ── ONBOARDING ── */
+#screen-onboarding { background: var(--bg); }
+.onb-header { padding: 32px 24px 16px; text-align: center; }
+.onb-icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(107,63,240,0.3); }
+.onb-icon svg { width: 36px; height: 36px; color: white; }
+.onb-title { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; line-height: 1.2; }
+.onb-sub { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
 
 /* ── OVERLAYS ── */
 .overlay { position: fixed; inset: 0; background: rgba(26,16,51,0.6); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s; backdrop-filter: blur(4px); }
@@ -242,14 +266,69 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-.section-pad { padding: 16px 20px 8px; font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; }
 </style>
 </head>
 <body>
 
+<!-- ── ONBOARDING ── -->
+<div id="screen-onboarding" class="screen no-nav">
+  <div class="onb-header">
+    <div class="onb-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    </div>
+    <div class="onb-title">Заполните профиль</div>
+    <div class="onb-sub">Это нужно один раз. После регистрация на любое мероприятие — в один клик.</div>
+  </div>
+  <div class="form-body">
+    <div class="form-group">
+      <label class="form-label">ФИО (полностью)</label>
+      <input class="form-input" id="onbName" placeholder="Иванов Иван Иванович" type="text" autocomplete="name">
+      <div class="form-error" id="onbNameError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Университет</label>
+      <select class="form-select" id="onbUni" onchange="onUniversityChange('onb')">
+        <option value="">Выберите вуз...</option>
+        <option value="ВШЭ">НИУ ВШЭ</option>
+        <option value="МГУ">МГУ им. Ломоносова</option>
+        <option value="МФТИ">МФТИ</option>
+        <option value="РАНХиГС">РАНХиГС</option>
+        <option value="МГИМО">МГИМО</option>
+        <option value="Другой">Другой вуз...</option>
+      </select>
+      <div class="form-error" id="onbUniError"></div>
+    </div>
+    <div class="form-group" id="onbUniOtherGroup" style="display:none;">
+      <label class="form-label">Название вашего вуза</label>
+      <input class="form-input" id="onbUniOther" placeholder="Введите название" type="text">
+      <div class="form-error" id="onbUniOtherError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Курс</label>
+      <select class="form-select" id="onbCourse">
+        <option value="">Выберите курс...</option>
+        <option value="1">1 курс (бакалавриат)</option>
+        <option value="2">2 курс (бакалавриат)</option>
+        <option value="3">3 курс (бакалавриат)</option>
+        <option value="4">4 курс (бакалавриат)</option>
+        <option value="маг1">1 курс (магистратура)</option>
+        <option value="маг2">2 курс (магистратура)</option>
+      </select>
+      <div class="form-error" id="onbCourseError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="onbEmail" placeholder="ivan@student.hse.ru" type="email" autocomplete="email">
+      <div class="form-error" id="onbEmailError"></div>
+    </div>
+    <button class="btn btn-primary" id="onbSubmitBtn" onclick="submitOnboarding()" style="margin-top:8px;">
+      Сохранить профиль
+    </button>
+  </div>
+</div>
+
 <!-- ── EVENTS ── -->
-<div id="screen-events" class="screen active">
+<div id="screen-events" class="screen">
   <div class="events-header">
     <div class="events-logo">HSE <span>CASE</span> CLUB</div>
     <div class="search-bar">
@@ -262,10 +341,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <button class="tab" onclick="switchTab(this,'past')">Прошедшие</button>
   </div>
   <div class="events-list" id="eventsList">
-    <div class="loading-screen">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Загружаем мероприятия...</div>
-    </div>
+    <div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Загружаем мероприятия...</div></div>
   </div>
 </div>
 
@@ -275,10 +351,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
     Назад
   </div>
-  <div class="detail-banner" id="detailBanner">
-    <div id="detailBannerBg" style="position:absolute;inset:0;"></div>
-    <div class="detail-banner-title" id="detailBannerTitle"></div>
-  </div>
+  <div id="detailBannerWrap"></div>
   <div class="detail-content">
     <div class="detail-info-row">
       <div class="detail-info-pill">
@@ -308,55 +381,23 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
-<!-- ── REGISTRATION FORM ── -->
+<!-- ── REGISTER (CONFIRM) ── -->
 <div id="screen-register" class="screen">
   <div class="detail-back" onclick="showScreen('detail')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
     Назад
   </div>
   <div class="form-header">
-    <div class="form-title">Регистрация на мероприятие</div>
-    <div class="form-subtitle" style="margin-top:8px;" id="formEventSub"></div>
+    <div class="form-title">Подтверждение регистрации</div>
+    <div class="form-subtitle" style="margin-top:8px;" id="confirmEventSub"></div>
   </div>
   <div class="form-body">
-    <div class="form-group">
-      <label class="form-label">Имя и фамилия</label>
-      <input class="form-input" id="fieldName" placeholder="Иван Иванов" type="text">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Университет</label>
-      <select class="form-select" id="fieldUniversity">
-        <option value="">Выберите вуз...</option>
-        <option value="ВШЭ">НИУ ВШЭ</option>
-        <option value="МГУ">МГУ им. Ломоносова</option>
-        <option value="МФТИ">МФТИ</option>
-        <option value="РАНХиГС">РАНХиГС</option>
-        <option value="МГИМО">МГИМО</option>
-        <option value="Другой">Другой вуз...</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Курс</label>
-      <select class="form-select" id="fieldCourse">
-        <option value="">Выберите курс...</option>
-        <option value="1">1 курс (бакалавриат)</option>
-        <option value="2">2 курс (бакалавриат)</option>
-        <option value="3">3 курс (бакалавриат)</option>
-        <option value="4">4 курс (бакалавриат)</option>
-        <option value="маг1">1 курс (магистратура)</option>
-        <option value="маг2">2 курс (магистратура)</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input class="form-input" id="fieldEmail" placeholder="ivan@student.hse.ru" type="email">
-    </div>
-    <button class="btn btn-primary" id="submitBtn" onclick="submitRegistration()" style="margin-top:8px;">
-      Зарегистрироваться
+    <div class="confirm-block" id="confirmBlock"></div>
+    <button class="btn btn-primary" id="confirmBtn" onclick="confirmRegistration()" style="margin-top:8px;">
+      Подтвердить регистрацию
     </button>
-    <div style="font-size:12px;color:var(--text-muted);text-align:center;line-height:1.6;">
-      После регистрации QR-билет придёт в бота.<br>
-      Без QR-кода на входе не пустим 🙏
+    <div class="form-hint" style="text-align:center;">
+      Хотите указать другие данные? Перейдите во вкладку «Профиль» и нажмите «Изменить».
     </div>
   </div>
 </div>
@@ -368,11 +409,17 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
-<!-- ── MEMBERS ── -->
+<!-- ── MEMBERS (placeholder) ── -->
 <div id="screen-members" class="screen">
   <div class="section-pad">Участники сообщества</div>
-  <div class="members-list" id="membersList">
-    <div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Загружаем участников...</div></div>
+  <div class="members-list">
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <div class="empty-title">Скоро здесь появятся участники</div>
+      <div class="empty-sub">Лента сообщества и нетворкинг между участниками клуба</div>
+    </div>
   </div>
 </div>
 
@@ -385,15 +432,18 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
       </div>
       <div class="profile-name" id="profileName">—</div>
       <div class="profile-username" id="profileUsername">—</div>
+      <button class="profile-edit-btn" onclick="openEditProfile()">Изменить</button>
     </div>
+
+    <div id="profileUpcoming"></div>
+
     <div>
-      <div class="profile-section-title">Ваши ближайшие мероприятия</div>
-      <div id="profileEvents">
-        <div style="font-size:13px;color:var(--text-sec);">Загружаем...</div>
-      </div>
+      <div class="profile-section-title">Данные профиля</div>
+      <div class="profile-info-list" id="profileInfoList"></div>
     </div>
+
     <div class="profile-links">
-      <a class="profile-link-item" href="https://t.me/case_club_support" target="_blank" style="text-decoration:none;color:inherit;">
+      <a class="profile-link-item" href="https://t.me/case_club_support" target="_blank">
         <div class="profile-link-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg></div>
         <div class="profile-link-text">
           <div class="profile-link-title">Поддержка</div>
@@ -402,6 +452,64 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
         <div class="profile-link-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
       </a>
     </div>
+  </div>
+</div>
+
+<!-- ── EDIT PROFILE ── -->
+<div id="screen-edit-profile" class="screen">
+  <div class="detail-back" onclick="showScreen('profile')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+    Назад
+  </div>
+  <div class="form-header">
+    <div class="form-title">Редактирование профиля</div>
+    <div class="form-subtitle" style="margin-top:8px;">Обновите данные — они сохранятся для всех будущих регистраций.</div>
+  </div>
+  <div class="form-body">
+    <div class="form-group">
+      <label class="form-label">ФИО (полностью)</label>
+      <input class="form-input" id="editName" placeholder="Иванов Иван Иванович" type="text">
+      <div class="form-error" id="editNameError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Университет</label>
+      <select class="form-select" id="editUni" onchange="onUniversityChange('edit')">
+        <option value="">Выберите вуз...</option>
+        <option value="ВШЭ">НИУ ВШЭ</option>
+        <option value="МГУ">МГУ им. Ломоносова</option>
+        <option value="МФТИ">МФТИ</option>
+        <option value="РАНХиГС">РАНХиГС</option>
+        <option value="МГИМО">МГИМО</option>
+        <option value="Другой">Другой вуз...</option>
+      </select>
+      <div class="form-error" id="editUniError"></div>
+    </div>
+    <div class="form-group" id="editUniOtherGroup" style="display:none;">
+      <label class="form-label">Название вашего вуза</label>
+      <input class="form-input" id="editUniOther" placeholder="Введите название" type="text">
+      <div class="form-error" id="editUniOtherError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Курс</label>
+      <select class="form-select" id="editCourse">
+        <option value="">Выберите курс...</option>
+        <option value="1">1 курс (бакалавриат)</option>
+        <option value="2">2 курс (бакалавриат)</option>
+        <option value="3">3 курс (бакалавриат)</option>
+        <option value="4">4 курс (бакалавриат)</option>
+        <option value="маг1">1 курс (магистратура)</option>
+        <option value="маг2">2 курс (магистратура)</option>
+      </select>
+      <div class="form-error" id="editCourseError"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="editEmail" placeholder="ivan@student.hse.ru" type="email">
+      <div class="form-error" id="editEmailError"></div>
+    </div>
+    <button class="btn btn-primary" id="editSubmitBtn" onclick="submitEditProfile()" style="margin-top:8px;">
+      Сохранить
+    </button>
   </div>
 </div>
 
@@ -426,7 +534,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
         </div>
         <div class="admin-action-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
       </button>
-      <button class="admin-action" onclick="alert('Создать мероприятие можно через бота: команда /start → ⚙️ Управление → ➕ Создать')">
+      <button class="admin-action" onclick="showHint('Создание мероприятия — через бота: /start → «Управление» → «Создать мероприятие». Там можно загрузить фото и заполнить пошагово.')">
         <div class="admin-action-icon green">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>
@@ -442,7 +550,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 <!-- ── ADMIN EVENTS LIST ── -->
 <div id="screen-admin-events" class="screen">
-  <div class="detail-back" onclick="showScreen('admin'); setNav(document.getElementById('nav-admin'))">
+  <div class="detail-back" onclick="navigate('admin', document.getElementById('nav-admin'))">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
     Назад в админку
   </div>
@@ -452,18 +560,16 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
-<!-- ── BOTTOM NAV ── -->
-<nav class="bottom-nav" id="bottomNav">
-  <!-- наполнение через JS -->
-</nav>
+<!-- ── BOTTOM NAV (build via JS) ── -->
+<nav class="bottom-nav" id="bottomNav"></nav>
 
 <!-- ── OVERLAYS ── -->
 <div class="overlay" id="successOverlay">
   <div class="overlay-card">
     <div class="overlay-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
-    <div class="overlay-title">Вы зарегистрированы!</div>
-    <div class="overlay-sub">QR-билет отправлен в бота 🎫<br>Вы также можете найти его во вкладке «Билет»</div>
-    <button class="overlay-btn" onclick="closeOverlayAndOpenTicket()">Открыть билет</button>
+    <div class="overlay-title" id="successTitle">Готово!</div>
+    <div class="overlay-sub" id="successSub">Изменения сохранены</div>
+    <button class="overlay-btn" onclick="closeOverlay()">Понятно</button>
   </div>
 </div>
 
@@ -476,8 +582,16 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
 </div>
 
+<div class="overlay" id="hintOverlay">
+  <div class="overlay-card">
+    <div class="overlay-title" id="hintTitle">Подсказка</div>
+    <div class="overlay-sub" id="hintMsg"></div>
+    <button class="overlay-btn" onclick="closeOverlay()">Понятно</button>
+  </div>
+</div>
+
 <script>
-// ⚠️ ВАЖНО: укажи URL твоего ngrok / задеплоенного API
+// ⚠️ ВАЖНО: вписать актуальный URL ngrok / задеплоенного API
 const API_URL = 'https://extradite-entering-remover.ngrok-free.dev';
 
 let allEvents = [];
@@ -489,6 +603,7 @@ let tgUser = null;
 let initData = '';
 let isAdmin = false;
 let currentTicketId = null;
+let myProfile = null;
 
 if (window.Telegram && window.Telegram.WebApp) {
   const tg = window.Telegram.WebApp;
@@ -512,11 +627,40 @@ async function apiCall(endpoint, opts = {}) {
   return res.json();
 }
 
-// ── NAV BUILDER (адаптирует меню под роль) ──
+// ── VALIDATION ──
+function validateFullName(name) {
+  // ФИО — минимум 3 слова, каждое от 2 букв
+  const parts = name.trim().split(/\s+/).filter(p => p.length > 0);
+  if (parts.length < 3) return 'Введите ФИО полностью (Фамилия Имя Отчество)';
+  if (parts.some(p => p.length < 2)) return 'Каждая часть ФИО — минимум 2 буквы';
+  if (!parts.every(p => /^[А-Яа-яЁёA-Za-z\-]+$/.test(p))) return 'ФИО должно содержать только буквы';
+  return null;
+}
+function validateEmail(email) {
+  if (!email.includes('@') || !/.+@.+\..+/.test(email)) return 'Введите корректный email';
+  return null;
+}
+function setFieldError(fieldId, errorId, message) {
+  const field = document.getElementById(fieldId);
+  const err = document.getElementById(errorId);
+  if (message) {
+    field?.classList.add('error');
+    if (err) err.textContent = message;
+  } else {
+    field?.classList.remove('error');
+    if (err) err.textContent = '';
+  }
+}
+function clearFormErrors(prefix) {
+  ['Name', 'Uni', 'UniOther', 'Course', 'Email'].forEach(f => {
+    setFieldError(prefix + f, prefix + f + 'Error', null);
+  });
+}
+
+// ── NAV BUILDER ──
 function buildNav() {
   const nav = document.getElementById('bottomNav');
   if (isAdmin) {
-    // 5 пунктов: Мероприятия, Билет, [Управление центр], Участники, Профиль
     nav.innerHTML = `
       <div class="nav-item active" id="nav-events" onclick="navigate('events', this)">
         <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
@@ -540,7 +684,6 @@ function buildNav() {
       </div>
     `;
   } else {
-    // 4 пункта: Мероприятия, Билет, Участники, Профиль
     nav.innerHTML = `
       <div class="nav-item active" id="nav-events" onclick="navigate('events', this)">
         <div class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
@@ -567,7 +710,6 @@ function navigate(name, el) {
   showScreen(name);
   if (name === 'ticket') loadTickets();
   if (name === 'profile') loadProfile();
-  if (name === 'members') loadMembers();
   if (name === 'admin') loadAdminStats();
 }
 
@@ -575,6 +717,10 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
+  // Прячем nav на онбординге
+  const nav = document.getElementById('bottomNav');
+  if (name === 'onboarding') nav.classList.add('hidden');
+  else nav.classList.remove('hidden');
 }
 function setNav(el) {
   if (!el) return;
@@ -584,15 +730,103 @@ function setNav(el) {
 
 // ── INIT ──
 async function init() {
-  // Получаем профиль чтобы понять admin или нет
   try {
     const me = await apiCall('/api/me');
     isAdmin = !!me.is_admin;
+    myProfile = me.user || null;
+    if (me.needs_onboarding) {
+      showScreen('onboarding');
+      // Префилл из TG
+      document.getElementById('onbName').value =
+        ((tgUser.first_name || '') + ' ' + (tgUser.last_name || '')).trim();
+      return;
+    }
   } catch (e) {
     isAdmin = false;
   }
   buildNav();
   await loadEvents();
+}
+
+// ── ONBOARDING / EDIT PROFILE ──
+function onUniversityChange(prefix) {
+  const uni = document.getElementById(prefix + 'Uni').value;
+  const otherGroup = document.getElementById(prefix + 'UniOtherGroup');
+  otherGroup.style.display = uni === 'Другой' ? 'flex' : 'none';
+}
+
+async function submitOnboarding() {
+  await submitProfile('onb', 'onbSubmitBtn', true);
+}
+async function submitEditProfile() {
+  await submitProfile('edit', 'editSubmitBtn', false);
+}
+
+async function submitProfile(prefix, btnId, isFirstTime) {
+  clearFormErrors(prefix);
+  const name = document.getElementById(prefix + 'Name').value.trim();
+  const uni = document.getElementById(prefix + 'Uni').value;
+  const uniOther = document.getElementById(prefix + 'UniOther').value.trim();
+  const course = document.getElementById(prefix + 'Course').value;
+  const email = document.getElementById(prefix + 'Email').value.trim();
+
+  let hasErrors = false;
+  const nameErr = validateFullName(name);
+  if (nameErr) { setFieldError(prefix + 'Name', prefix + 'NameError', nameErr); hasErrors = true; }
+  if (!uni) { setFieldError(prefix + 'Uni', prefix + 'UniError', 'Выберите вуз'); hasErrors = true; }
+  if (uni === 'Другой' && !uniOther) { setFieldError(prefix + 'UniOther', prefix + 'UniOtherError', 'Укажите название вашего вуза'); hasErrors = true; }
+  if (!course) { setFieldError(prefix + 'Course', prefix + 'CourseError', 'Выберите курс'); hasErrors = true; }
+  const emailErr = validateEmail(email);
+  if (emailErr) { setFieldError(prefix + 'Email', prefix + 'EmailError', emailErr); hasErrors = true; }
+
+  if (hasErrors) return;
+
+  const btn = document.getElementById(btnId);
+  const oldText = btn.textContent;
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const res = await apiCall('/api/me', {
+      method: 'POST',
+      body: JSON.stringify({
+        full_name: name,
+        university: uni,
+        university_other: uniOther,
+        course, email
+      })
+    });
+    myProfile = res.user;
+
+    if (isFirstTime) {
+      buildNav();
+      await loadEvents();
+      navigate('events', document.getElementById('nav-events'));
+      showSuccess('Профиль создан!', 'Теперь регистрация на любое мероприятие — в один клик');
+    } else {
+      showScreen('profile');
+      setNav(document.getElementById('nav-profile'));
+      loadProfile();
+      showSuccess('Профиль обновлён', 'Данные сохранены');
+    }
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    btn.textContent = oldText;
+    btn.disabled = false;
+  }
+}
+
+function openEditProfile() {
+  if (!myProfile) return;
+  document.getElementById('editName').value = myProfile.full_name || '';
+  document.getElementById('editUni').value = myProfile.university || '';
+  document.getElementById('editUniOther').value = myProfile.university_other || '';
+  document.getElementById('editCourse').value = myProfile.course || '';
+  document.getElementById('editEmail').value = myProfile.email || '';
+  onUniversityChange('edit');
+  clearFormErrors('edit');
+  showScreen('edit-profile');
 }
 
 // ── EVENTS ──
@@ -609,6 +843,26 @@ function shortTitle(t) {
   if (words.length <= 1) return t.toUpperCase();
   const m = Math.ceil(words.length / 2);
   return words.slice(0, m).join(' ').toUpperCase() + '\n' + words.slice(m).join(' ').toUpperCase();
+}
+
+function bannerHTML(ev, sizeClass = '') {
+  if (ev.banner_url) {
+    return `<img class="event-banner-photo" src="${ev.banner_url}" alt="${ev.title}">`;
+  }
+  const colors = getColors(ev.id);
+  return `
+    <div class="event-banner" style="background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)">
+      <div class="event-banner-bg-shapes">
+        <svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08">
+          <circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/>
+          <circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/>
+        </svg>
+      </div>
+      <div class="event-banner-text">
+        <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(ev.title)}</div>
+        <div class="event-banner-sub">HSE × CASE CLUB</div>
+      </div>
+    </div>`;
 }
 
 async function loadEvents() {
@@ -646,22 +900,14 @@ function renderEvents() {
   list.innerHTML = filtered.map(ev => {
     const isReg = myRegistrations.has(ev.id);
     const isPast = ev.status === 'past';
-    const colors = getColors(ev.id);
-    const pct = ev.seats > 0 ? Math.round((ev.registered / ev.seats) * 100) : 0;
     return `
     <div class="event-card" onclick="openEvent(${ev.id})">
-      <div class="event-banner-placeholder" style="background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)">
-        <div class="event-banner-bg"><svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08"><circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/><circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/></svg></div>
-        <div class="event-banner-text">
-          <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(ev.title)}</div>
-          <div class="event-banner-sub">HSE × CASE CLUB</div>
-        </div>
-      </div>
+      ${bannerHTML(ev)}
       <div class="event-body">
         <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
           <span class="badge badge-type">${ev.type}</span>
-          ${isPast ? '<span class="badge badge-done">Прошло</span>' : pct >= 90 ? '<span class="badge badge-soon">Почти нет мест</span>' : ''}
-          ${isReg ? '<span class="badge badge-registered">✓ Записаны</span>' : ''}
+          ${isPast ? '<span class="badge badge-done">Прошло</span>' : ''}
+          ${isReg ? '<span class="badge badge-registered">Вы записаны</span>' : ''}
         </div>
         <div class="event-title">${ev.title}</div>
         <div class="event-meta">
@@ -672,9 +918,9 @@ function renderEvents() {
         <span class="event-more">Подробнее →</span>
       </div>
       <div class="event-footer">
-        <span class="event-count">${ev.registered}/${ev.seats} мест занято</span>
-        ${isPast ? '<button class="event-register-btn registered">✓ Завершено</button>'
-          : isReg ? '<button class="event-register-btn registered">✓ Записаны</button>'
+        <span class="event-count">Записались: ${ev.registered}</span>
+        ${isPast ? '<button class="event-register-btn registered">Завершено</button>'
+          : isReg ? '<button class="event-register-btn registered">Вы записаны</button>'
           : '<button class="event-register-btn" onclick="event.stopPropagation();openEvent(' + ev.id + ')">Записаться</button>'}
       </div>
     </div>`;
@@ -699,10 +945,19 @@ async function openEvent(id) {
   try {
     const ev = await apiCall(`/api/events/${id}`);
     currentEvent = ev;
-    const colors = getColors(ev.id);
-    document.getElementById('detailBannerBg').style.cssText = `position:absolute;inset:0;background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
-    document.getElementById('detailBannerTitle').textContent = shortTitle(ev.title).replace('\n', ' ');
-    document.getElementById('detailBannerTitle').style.color = colors.accent;
+
+    // Banner
+    const wrap = document.getElementById('detailBannerWrap');
+    if (ev.banner_url) {
+      wrap.innerHTML = `<img class="detail-banner-photo" src="${ev.banner_url}" alt="${ev.title}">`;
+    } else {
+      const colors = getColors(ev.id);
+      wrap.innerHTML = `
+        <div class="detail-banner" style="background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)">
+          <div class="detail-banner-title" style="color:${colors.accent}">${shortTitle(ev.title).replace('\n', ' ')}</div>
+        </div>`;
+    }
+
     document.getElementById('detailDate').textContent = ev.date_display || ev.date;
     document.getElementById('detailTime').textContent = ev.time;
     if (ev.speaker) {
@@ -719,60 +974,68 @@ async function openEvent(id) {
       document.getElementById('detailAddressBlock').style.display = 'none';
     }
     document.getElementById('detailDesc').textContent = ev.description || '';
-    const wrap = document.getElementById('detailRegisterWrap');
+
+    const regWrap = document.getElementById('detailRegisterWrap');
     const isReg = myRegistrations.has(id);
     const isPast = ev.status === 'past';
-    if (isPast) wrap.innerHTML = `<button class="btn btn-ghost">Мероприятие завершено</button>`;
-    else if (isReg) wrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">🎫 Открыть билет</button>`;
-    else if (ev.registered >= ev.seats) wrap.innerHTML = `<button class="btn btn-ghost">😔 Мест нет</button>`;
-    else wrap.innerHTML = `<button class="btn btn-primary" onclick="openRegistration()">Зарегистрироваться</button>`;
+    if (isPast) regWrap.innerHTML = `<button class="btn btn-ghost">Мероприятие завершено</button>`;
+    else if (isReg) regWrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">Открыть билет</button>`;
+    else regWrap.innerHTML = `<button class="btn btn-primary" onclick="openConfirm()">Зарегистрироваться</button>`;
     showScreen('detail');
   } catch (e) { showError(e.message); }
 }
 
-function openRegistration() {
-  document.getElementById('formEventSub').textContent = currentEvent ? currentEvent.title : '';
-  document.getElementById('fieldName').value = ((tgUser.first_name || '') + ' ' + (tgUser.last_name || '')).trim();
+function openConfirm() {
+  if (!currentEvent || !myProfile) return;
+  document.getElementById('confirmEventSub').textContent = currentEvent.title;
+  const uni = myProfile.university_other || myProfile.university || '—';
+  document.getElementById('confirmBlock').innerHTML = `
+    <div class="confirm-row"><span class="confirm-label">ФИО</span><span class="confirm-value">${myProfile.full_name || '—'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Вуз</span><span class="confirm-value">${uni}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Курс</span><span class="confirm-value">${myProfile.course || '—'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value">${myProfile.email || '—'}</span></div>
+  `;
   showScreen('register');
 }
 
-async function submitRegistration() {
-  const name = document.getElementById('fieldName').value.trim();
-  const uni = document.getElementById('fieldUniversity').value;
-  const course = document.getElementById('fieldCourse').value;
-  const email = document.getElementById('fieldEmail').value.trim();
-  if (!name || !uni || !email) { showError('Заполните все поля'); return; }
-  if (!email.includes('@')) { showError('Введите корректный email'); return; }
-  const btn = document.getElementById('submitBtn');
+async function confirmRegistration() {
+  const btn = document.getElementById('confirmBtn');
   btn.innerHTML = '<div class="spinner"></div>';
   btn.disabled = true;
   try {
     await apiCall('/api/register', {
       method: 'POST',
-      body: JSON.stringify({ event_id: currentEvent.id, full_name: name, university: uni, course, email })
+      body: JSON.stringify({ event_id: currentEvent.id })
     });
     myRegistrations.add(currentEvent.id);
-    document.getElementById('successOverlay').classList.add('show');
     await loadEvents();
-  } catch (e) { showError(e.message); }
-  finally { btn.innerHTML = 'Зарегистрироваться'; btn.disabled = false; }
+    showSuccess('Вы зарегистрированы!', 'QR-билет отправлен в бота. Также найдёте его во вкладке «Билет».');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    btn.textContent = 'Подтвердить регистрацию';
+    btn.disabled = false;
+  }
 }
 
+function showSuccess(title, sub) {
+  document.getElementById('successTitle').textContent = title;
+  document.getElementById('successSub').textContent = sub;
+  document.getElementById('successOverlay').classList.add('show');
+}
 function showError(msg) {
   document.getElementById('errorMsg').textContent = msg;
   document.getElementById('errorOverlay').classList.add('show');
 }
+function showHint(msg) {
+  document.getElementById('hintMsg').textContent = msg;
+  document.getElementById('hintOverlay').classList.add('show');
+}
 function closeOverlay() {
   document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
-  showScreen('events');
-  setNav(document.getElementById('nav-events'));
-}
-function closeOverlayAndOpenTicket() {
-  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
-  navigate('ticket', document.getElementById('nav-ticket'));
 }
 
-// ── TICKETS (билеты на мероприятия) ──
+// ── TICKETS ──
 async function loadTickets() {
   const wrap = document.getElementById('ticketWrap');
   try {
@@ -789,11 +1052,11 @@ async function loadTickets() {
       return;
     }
 
-    // Берём первый билет по умолчанию
     if (!currentTicketId || !myRegList.find(r => r.event_id === currentTicketId)) {
       currentTicketId = myRegList[0].event_id;
     }
     const ticket = myRegList.find(r => r.event_id === currentTicketId);
+    const uni = ticket.university || '';
 
     wrap.innerHTML = `
       <div class="ticket-logo">HSE × CASE CLUB</div>
@@ -805,7 +1068,7 @@ async function loadTickets() {
         <div class="ticket-name">${ticket.full_name}</div>
         <div class="ticket-username">${tgUser.username ? '@' + tgUser.username : ''}</div>
         <div class="qr-container"><div id="qrTarget"></div></div>
-        <div class="ticket-meta">${ticket.university}${ticket.course ? ' · ' + ticket.course + ' курс' : ''}<br>📅 ${ticket.date} · 🕐 ${ticket.time}</div>
+        <div class="ticket-meta">${uni}${ticket.course ? ' · ' + ticket.course + ' курс' : ''}<br>${ticket.date} · ${ticket.time}</div>
       </div>
       ${myRegList.length > 1 ? `
       <div class="ticket-list">
@@ -819,7 +1082,6 @@ async function loadTickets() {
       </div>` : ''}
     `;
 
-    // Генерируем QR
     const qrData = `HSE_CC|${tgUser.id}|${ticket.event_id}|${ticket.qr_token}`;
     new QRCode(document.getElementById('qrTarget'), {
       text: qrData, width: 156, height: 156,
@@ -836,47 +1098,76 @@ function switchTicket(id) {
   loadTickets();
 }
 
-// ── MEMBERS ──
-async function loadMembers() {
-  const list = document.getElementById('membersList');
-  // Пока берём из регистраций — это участники сообщества клуба
-  try {
-    const data = await apiCall('/api/events');
-    // Собираем уникальных регистрировавшихся через события
-    // Для простоты — показываем что в сообществе пока что
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
-        <div class="empty-title">Участники клуба</div>
-        <div class="empty-sub">Скоро здесь появится лента участников и нетворкинг</div>
-      </div>`;
-  } catch (e) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-title">Ошибка</div><div class="empty-sub">${e.message}</div></div>`;
-  }
+// ── PROFILE ──
+function daysUntil(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((d - today) / (1000 * 60 * 60 * 24));
 }
 
-// ── PROFILE ──
+function pluralDays(n) {
+  if (n === 0) return 'сегодня';
+  if (n === 1) return 'завтра';
+  if (n >= 2 && n <= 4) return `через ${n} дня`;
+  return `через ${n} дней`;
+}
+
 async function loadProfile() {
   try {
     const data = await apiCall('/api/me');
-    const u = data.user || {};
+    myProfile = data.user || {};
+    const u = myProfile;
+
     document.getElementById('profileName').textContent =
       u.full_name || ((tgUser.first_name || '') + ' ' + (tgUser.last_name || '')).trim() || 'Пользователь';
     document.getElementById('profileUsername').textContent =
       u.username ? '@' + u.username : (tgUser.username ? '@' + tgUser.username : '');
-    const evList = document.getElementById('profileEvents');
-    if (!data.registrations.length) {
-      evList.innerHTML = '<div style="font-size:13px;color:var(--text-sec);">Вы ещё не зарегистрированы ни на одно мероприятие.</div>';
+
+    // Только одно ближайшее мероприятие
+    const upcomingWrap = document.getElementById('profileUpcoming');
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = (data.registrations || [])
+      .filter(r => r.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (upcoming.length === 0) {
+      upcomingWrap.innerHTML = `
+        <div class="profile-section-title">Ближайшее мероприятие</div>
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.5;padding:0 4px;">У вас пока нет запланированных мероприятий. Зарегистрируйтесь на любое из ленты!</div>`;
     } else {
-      evList.innerHTML = data.registrations.map(r => `
-        <div class="profile-event-card">
-          <div class="profile-event-title">${r.title}</div>
-          <div class="profile-event-meta">📅 ${r.date} в ${r.time}</div>
-          <div class="profile-event-meta">📍 ${r.address || '—'}</div>
-        </div>`).join('');
+      const r = upcoming[0];
+      const d = daysUntil(r.date);
+      upcomingWrap.innerHTML = `
+        <div class="profile-section-title">Ваше ближайшее мероприятие</div>
+        <div class="upcoming-card">
+          <div class="upcoming-countdown">${pluralDays(d)}</div>
+          <div class="upcoming-title">${r.title}</div>
+          <div class="upcoming-meta-row">
+            <div class="upcoming-meta-pill">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              ${r.date_display || r.date}
+            </div>
+            <div class="upcoming-meta-pill">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${r.time}
+            </div>
+          </div>
+          ${r.address ? `<div class="upcoming-address">📍 ${r.address}</div>` : ''}
+        </div>`;
     }
+
+    // Инфо-список профиля
+    const uni = u.university_other || u.university || '—';
+    document.getElementById('profileInfoList').innerHTML = `
+      <div class="profile-info-row"><span class="profile-info-label">ФИО</span><span class="profile-info-value">${u.full_name || '—'}</span></div>
+      <div class="profile-info-row"><span class="profile-info-label">Вуз</span><span class="profile-info-value">${uni}</span></div>
+      <div class="profile-info-row"><span class="profile-info-label">Курс</span><span class="profile-info-value">${u.course || '—'}</span></div>
+      <div class="profile-info-row"><span class="profile-info-label">Email</span><span class="profile-info-value">${u.email || '—'}</span></div>
+    `;
   } catch (e) {
-    document.getElementById('profileEvents').innerHTML = `<div style="color:var(--danger);font-size:13px;">Ошибка: ${e.message}</div>`;
+    document.getElementById('profileUpcoming').innerHTML =
+      `<div style="color:var(--danger);font-size:13px;padding:8px;">Ошибка: ${e.message}</div>`;
   }
 }
 
@@ -917,12 +1208,11 @@ async function showAdminEvents() {
         <div class="admin-event-stats">
           <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.registered}</div><div class="admin-event-stat-label">Записались</div></div>
           <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.external_guests}</div><div class="admin-event-stat-label">Внешних</div></div>
-          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.seats - ev.registered}</div><div class="admin-event-stat-label">Мест свободно</div></div>
         </div>
         <div class="admin-event-actions">
-          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, false)">📥 Excel пропуска</button>
-          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, true)">📥 Excel все</button>
-          ${ev.status !== 'past' ? `<button class="admin-event-btn" onclick="broadcastEvent(${ev.id}, '${ev.title.replace(/'/g, '')}')">📢 Анонс</button>` : ''}
+          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, false)">Excel пропуска</button>
+          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, true)">Excel все</button>
+          ${ev.status !== 'past' ? `<button class="admin-event-btn" onclick="broadcastEvent(${ev.id}, '${ev.title.replace(/'/g, '')}')">Рассылка</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -938,10 +1228,9 @@ async function exportExcel(eventId, allGuests) {
     if (initData) headers['X-Init-Data'] = initData;
     else headers['X-Dev-Mode'] = '1';
     headers['ngrok-skip-browser-warning'] = 'true';
-
     const res = await fetch(url, { headers });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Ошибка скачивания' }));
+      const err = await res.json().catch(() => ({ detail: 'Ошибка' }));
       throw new Error(err.detail);
     }
     const blob = await res.blob();
@@ -949,9 +1238,8 @@ async function exportExcel(eventId, allGuests) {
     link.href = URL.createObjectURL(blob);
     link.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'export.xlsx';
     link.click();
-
     if (window.Telegram?.WebApp?.showAlert) {
-      window.Telegram.WebApp.showAlert('Файл скачан!');
+      window.Telegram.WebApp.showAlert('Файл скачан');
     }
   } catch (e) { showError(e.message); }
 }
@@ -960,7 +1248,7 @@ async function broadcastEvent(eventId, title) {
   if (!confirm(`Разослать анонс «${title}» всем пользователям бота?`)) return;
   try {
     const data = await apiCall(`/api/admin/broadcast/${eventId}`, { method: 'POST' });
-    alert(`✅ Рассылка завершена!\nОтправлено: ${data.sent}\nНе доставлено: ${data.failed}`);
+    showSuccess('Рассылка завершена', `Доставлено: ${data.sent}\nНе доставлено: ${data.failed}`);
   } catch (e) { showError(e.message); }
 }
 
