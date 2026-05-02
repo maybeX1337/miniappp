@@ -854,48 +854,69 @@ async function loadBannerBlob(url) {
     const res = await fetch(url, {
       headers: { 'ngrok-skip-browser-warning': 'true' }
     });
-    if (!res.ok) throw new Error('not ok');
+    if (!res.ok) throw new Error('not ok ' + res.status);
     const blob = await res.blob();
-    if (!blob.type.startsWith('image/')) throw new Error('not image');
+    if (!blob.type.startsWith('image/')) throw new Error('not image: ' + blob.type);
     const blobUrl = URL.createObjectURL(blob);
     bannerCache.set(url, blobUrl);
     return blobUrl;
   } catch (e) {
+    console.warn('Banner load failed:', url, e.message);
     return null;
   }
 }
 
-async function applyBanners(scope = document) {
-  const imgs = scope.querySelectorAll('img[data-banner-src]');
-  for (const img of imgs) {
-    const src = img.getAttribute('data-banner-src');
-    const blobUrl = await loadBannerBlob(src);
-    if (blobUrl) {
-      img.src = blobUrl;
-      img.removeAttribute('data-banner-src');
-    } else {
-      // Fallback — заменяем картинку на градиентную плашку
-      const id = parseInt(img.getAttribute('data-event-id') || '0', 10);
-      const colors = getColors(id);
-      const title = img.getAttribute('alt') || '';
-      const placeholder = document.createElement('div');
-      placeholder.className = img.classList.contains('detail-banner-photo') ? 'detail-banner' : 'event-banner';
-      placeholder.style.cssText = `background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
-      placeholder.innerHTML = `
-        <div class="event-banner-bg-shapes">
-          <svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08">
-            <circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/>
-            <circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/>
-          </svg>
-        </div>
-        <div class="event-banner-text">
-          <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(title)}</div>
-          <div class="event-banner-sub">HSE × CASE CLUB</div>
-        </div>`;
-      img.replaceWith(placeholder);
-    }
+async function loadOneBanner(img) {
+  const src = img.getAttribute('data-banner-src');
+  if (!src) return;
+  // Сразу убираем атрибут, чтобы не обработать дважды
+  img.removeAttribute('data-banner-src');
+  const blobUrl = await loadBannerBlob(src);
+  if (blobUrl) {
+    img.src = blobUrl;
+  } else {
+    // Fallback — заменяем картинку на градиентную плашку
+    const id = parseInt(img.getAttribute('data-event-id') || '0', 10);
+    const colors = getColors(id);
+    const title = img.getAttribute('alt') || '';
+    const placeholder = document.createElement('div');
+    placeholder.className = img.classList.contains('detail-banner-photo') ? 'detail-banner' : 'event-banner';
+    placeholder.style.cssText = `background:linear-gradient(135deg,${colors.c1} 0%,${colors.c2} 100%)`;
+    placeholder.innerHTML = `
+      <div class="event-banner-bg-shapes">
+        <svg width="120" height="120" viewBox="0 0 120 120" opacity="0.08">
+          <circle cx="60" cy="60" r="50" stroke="white" stroke-width="20" fill="none"/>
+          <circle cx="60" cy="60" r="25" stroke="white" stroke-width="12" fill="none"/>
+        </svg>
+      </div>
+      <div class="event-banner-text">
+        <div class="event-banner-title" style="color:${colors.accent};white-space:pre-line">${shortTitle(title)}</div>
+        <div class="event-banner-sub">HSE × CASE CLUB</div>
+      </div>`;
+    img.replaceWith(placeholder);
   }
 }
+
+function applyBanners(scope = document) {
+  // Запускаем параллельно для всех найденных картинок
+  scope.querySelectorAll('img[data-banner-src]').forEach(img => {
+    loadOneBanner(img);
+  });
+}
+
+// Автоматически подхватываем новые картинки (на случай если что-то добавится в DOM)
+const bannerObserver = new MutationObserver(mutations => {
+  for (const m of mutations) {
+    for (const node of m.addedNodes) {
+      if (node.nodeType !== 1) continue;
+      if (node.matches?.('img[data-banner-src]')) {
+        loadOneBanner(node);
+      }
+      node.querySelectorAll?.('img[data-banner-src]').forEach(loadOneBanner);
+    }
+  }
+});
+bannerObserver.observe(document.body, { childList: true, subtree: true });
 
 function bannerHTML(ev, sizeClass = '') {
   if (ev.banner_url) {
