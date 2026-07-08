@@ -97,8 +97,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .event-meta-pill svg { width: 13px; height: 13px; color: var(--accent); }
 .event-desc { font-size: 13px; color: var(--text-sec); line-height: 1.5; margin-bottom: 12px; }
 .event-more { font-size: 13px; color: var(--accent); font-weight: 600; }
-.event-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--accent-dim2); border-top: 1px solid var(--border); }
-.event-count { font-size: 12px; color: var(--text-sec); }
+.event-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .event-register-btn { padding: 8px 18px; background: var(--accent); color: white; border: none; border-radius: 50px; font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
 .event-register-btn.registered { background: rgba(16,185,129,0.1); color: var(--success); }
 
@@ -1000,13 +999,12 @@ function renderEvents() {
           <div class="event-meta-pill"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${ev.time}</div>
         </div>
         <div class="event-desc">${(ev.description || '').substring(0, 100)}${ev.description && ev.description.length > 100 ? '...' : ''}</div>
-        <span class="event-more">Подробнее →</span>
-      </div>
-      <div class="event-footer">
-        <span class="event-count">Записались: ${ev.registered}</span>
-        ${isPast ? '<button class="event-register-btn registered">Завершено</button>'
-          : isReg ? '<button class="event-register-btn registered">Вы записаны</button>'
-          : '<button class="event-register-btn" onclick="event.stopPropagation();openEvent(' + ev.id + ')">Записаться</button>'}
+        <div class="event-actions">
+          <span class="event-more">Подробнее →</span>
+          ${isPast ? '<button class="event-register-btn registered">Завершено</button>'
+            : isReg ? '<button class="event-register-btn registered">Вы записаны</button>'
+            : '<button class="event-register-btn" onclick="event.stopPropagation();openEvent(' + ev.id + ')">Записаться</button>'}
+        </div>
       </div>
     </div>`;
   }).join('');
