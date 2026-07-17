@@ -705,6 +705,7 @@ function buildNav() {
 }
 
 function navigate(name, el) {
+  if (name === 'admin' && !isAdmin) return;
   setNav(el);
   showScreen(name);
   if (name === 'ticket') loadTickets();
