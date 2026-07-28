@@ -205,6 +205,19 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .profile-link-sub { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
 .profile-link-arrow svg { width: 16px; height: 16px; color: var(--text-muted); }
 
+/* ── CASE STUDY ── */
+.cs-card { background: var(--card); border-radius: var(--radius); padding: 18px; font-size: 14px; line-height: 1.65; box-shadow: 0 2px 16px rgba(107,63,240,0.07); white-space: pre-line; }
+.cs-stage { background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 10px; box-shadow: 0 1px 8px rgba(107,63,240,0.06); display: flex; flex-direction: column; gap: 6px; }
+.cs-stage-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.cs-stage-name { font-size: 14px; font-weight: 700; }
+.cs-stage-dates { font-size: 12px; color: var(--text-sec); }
+.cs-stage-desc { font-size: 13px; color: var(--text-sec); line-height: 1.5; }
+.badge-active { background: rgba(16,185,129,0.12); color: var(--success); }
+.badge-soon { background: var(--accent-dim); color: var(--accent); }
+.badge-failed { background: rgba(239,68,68,0.1); color: var(--danger); }
+.cs-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.cs-photo-stub { aspect-ratio: 4/3; background: var(--accent-dim); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--accent); }
+
 /* ── MEMBERS ── */
 .members-list { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
 
@@ -459,24 +472,11 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <button class="tab active" id="csTabInfo" onclick="switchCsTab('info')">О Case Study</button>
     <button class="tab" id="csTabSelection" onclick="switchCsTab('selection')">Отбор</button>
   </div>
-  <div id="csInfoPane" style="padding:8px 20px 0;">
-    <div class="empty-state">
-      <div class="empty-icon">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-      </div>
-      <div class="empty-title">Раздел в разработке</div>
-      <div class="empty-sub">Скоро здесь появится вся информация о Case Study: что это такое, зачем участвовать, фотографии и истории прошлых сезонов.</div>
-    </div>
+  <div id="csInfoPane" style="padding:8px 20px 16px;">
+    <div class="loading-screen"><div class="loading-spinner"></div></div>
   </div>
-  <div id="csSelectionPane" style="padding:8px 20px 0;display:none;">
-    <div class="empty-state">
-      <div class="empty-icon">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      </div>
-      <div class="empty-title">Отбор скоро откроется</div>
-      <div class="empty-sub">Здесь будут этапы отбора с датами и статусами: математический тест, видео-визитка и интервью с мини-кейсом.</div>
-      <button class="btn btn-primary" style="margin-top:8px;" onclick="showHint('Отбор пока в разработке — следите за анонсами в канале клуба!')">Участвовать в отборе</button>
-    </div>
+  <div id="csSelectionPane" style="padding:8px 20px 16px;display:none;">
+    <div class="loading-screen"><div class="loading-spinner"></div></div>
   </div>
 </div>
 
@@ -896,6 +896,7 @@ function navigate(name, el) {
   if (name === 'ticket') loadTickets();
   if (name === 'profile') loadProfile();
   if (name === 'admin') loadAdminStats();
+  if (name === 'members') loadCaseStudy();
 }
 
 function showScreen(name) {
@@ -1067,11 +1068,87 @@ function openEditProfile() {
 }
 
 // ── CASE STUDY ──
+let csData = null;
+
 function switchCsTab(tab) {
   document.getElementById('csTabInfo').classList.toggle('active', tab === 'info');
   document.getElementById('csTabSelection').classList.toggle('active', tab === 'selection');
   document.getElementById('csInfoPane').style.display = tab === 'info' ? '' : 'none';
   document.getElementById('csSelectionPane').style.display = tab === 'selection' ? '' : 'none';
+}
+
+function csStageBadge(s) {
+  if (s.status === 'active') return '<span class="badge badge-active">Идёт сейчас</span>';
+  if (s.status === 'finished') return '<span class="badge badge-done">Завершён</span>';
+  return '<span class="badge badge-soon">Скоро</span>';
+}
+
+function csStageCard(s, i, withProgress) {
+  const res = csData.results ? csData.results[s.id] : null;
+  const resBadge = !withProgress ? '' :
+    res === 'passed' ? '<span class="badge badge-registered">Пройден ✅</span>' :
+    res === 'failed' ? '<span class="badge badge-failed">Не пройден</span>' : '';
+  const dates = (s.date_start_display || s.date_end_display)
+    ? `${s.date_start_display || '…'} — ${s.date_end_display || '…'}` : '';
+  const linkBtn = (withProgress && csData.joined && s.link && s.status === 'active')
+    ? `<a class="btn btn-ghost" style="margin-top:6px;padding:10px;" href="${s.link}" target="_blank">Перейти к этапу →</a>` : '';
+  return `
+    <div class="cs-stage">
+      <div class="cs-stage-head">
+        <div class="cs-stage-name">${i + 1}. ${s.name}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">${csStageBadge(s)}${resBadge}</div>
+      </div>
+      ${dates ? `<div class="cs-stage-dates">📅 ${dates}</div>` : ''}
+      ${s.description ? `<div class="cs-stage-desc">${s.description}</div>` : ''}
+      ${linkBtn}
+    </div>`;
+}
+
+async function loadCaseStudy() {
+  try {
+    csData = await apiCall('/api/cs');
+    renderCs();
+  } catch (e) {
+    const err = `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+    document.getElementById('csInfoPane').innerHTML = err;
+    document.getElementById('csSelectionPane').innerHTML = err;
+  }
+}
+
+function renderCs() {
+  const stages = csData.stages || [];
+
+  document.getElementById('csInfoPane').innerHTML = `
+    <div class="cs-card">${csData.info || ''}</div>
+    <div class="profile-section-title" style="margin-top:16px;">Этапы отбора</div>
+    ${stages.map((s, i) => csStageCard(s, i, false)).join('')}
+    <div class="profile-section-title" style="margin-top:16px;">Как это было</div>
+    <div class="cs-photos">
+      <div class="cs-photo-stub">Фото скоро</div>
+      <div class="cs-photo-stub">Фото скоро</div>
+      <div class="cs-photo-stub">Фото скоро</div>
+      <div class="cs-photo-stub">Фото скоро</div>
+    </div>`;
+
+  const joined = !!csData.joined;
+  document.getElementById('csSelectionPane').innerHTML = `
+    ${joined
+      ? '<div class="cs-card" style="text-align:center;font-weight:600;color:var(--success);">Вы участвуете в отборе ✅<br><span style="font-weight:400;font-size:13px;color:var(--text-sec);">Следите за этапами ниже — ссылки открываются, когда этап начинается</span></div>'
+      : '<div class="cs-card">Отбор в Case Study проходит в три этапа. Нажмите «Участвовать» — и этапы с датами и ссылками будут отображаться здесь.</div>'}
+    ${stages.map((s, i) => csStageCard(s, i, true)).join('')}
+    ${joined ? '' : '<button class="btn btn-primary" style="margin-top:14px;" onclick="csJoin()">Участвовать в отборе</button>'}`;
+}
+
+async function csJoin() {
+  try {
+    const res = await apiCall('/api/cs/join', { method: 'POST' });
+    csData.joined = true;
+    renderCs();
+    showSuccess(
+      res.already_joined ? 'Вы уже в отборе' : 'Вы участвуете в отборе!',
+      'Следите за этапами во вкладке «Отбор» — уведомления о результатах придут в бота.'
+    );
+  } catch (e) { showError(e.message); }
 }
 
 // ── EVENTS ──
