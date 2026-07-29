@@ -1146,8 +1146,9 @@ function openEditProfile() {
 }
 
 // ── CASE STUDY ──
-// ⚙️ Данные сезона: меняются раз в набор
-const CS = {
+// Значения по умолчанию. Реальный контент приходит из API (/api/cs → page)
+// и целиком редактируется в боте: «Управление» → «Case Study» → «Страница программы».
+const CS_DEFAULT = {
   season: "Winter'26",
   weeks: 5,
   deadline: '19 января',
@@ -1165,10 +1166,19 @@ const CS = {
     { q: 'Что получу в конце?', a: 'Диплом о прохождении программы и менторство для участия в Cup Russia.' },
     { q: 'До какого числа регистрация?', a: 'Заявки принимаем до 19 января.' },
   ],
-  // Фото галереи: { src: 'ссылка или путь', caption: 'подпись' }
   photos: [],
+  hero_title: 'Программа подготовки к кейс-чемпионатам',
+  hero_sub: '5 недель интенсива от победителей прошлых лет, менторство для Cup Russia и диплом о прохождении.',
+  about: '',
+  stats: [],
+  benefits: [],
+  wins: [],
+  steps: [],
+  cta_title: 'Набор открыт',
+  cta_text: 'Ссылка на первый этап отбора придёт на почту после регистрации.',
 };
 
+let CS = CS_DEFAULT;
 let csData = null;
 
 function switchCsTab(tab) {
@@ -1215,6 +1225,7 @@ function csStageCard(s, i, withProgress) {
 async function loadCaseStudy() {
   try {
     csData = await apiCall('/api/cs');
+    CS = Object.assign({}, CS_DEFAULT, csData.page || {});
     renderCs();
   } catch (e) {
     const err = `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
@@ -1232,8 +1243,8 @@ function renderCs() {
       <div class="cs-hero">
         <div class="cs-hero-mark">CS</div>
         <div class="cs-hero-season">HSCC Case Study · ${CS.season}</div>
-        <div class="cs-hero-title">Программа подготовки к кейс-чемпионатам</div>
-        <div class="cs-hero-sub">${CS.weeks} недель интенсива от победителей прошлых лет, менторство для Cup Russia и диплом о прохождении.</div>
+        <div class="cs-hero-title">${CS.hero_title}</div>
+        <div class="cs-hero-sub">${CS.hero_sub}</div>
         <div class="cs-hero-row">
           <a class="cs-hero-btn" href="${CS.formUrl}" target="_blank">Зарегистрироваться</a>
           <div class="cs-deadline">до ${CS.deadline}</div>
@@ -1242,22 +1253,25 @@ function renderCs() {
 
       <div>
         <div class="cs-h2">Что это такое</div>
-        <div class="cs-lead" style="margin-top:10px;">${csData.info || ''}</div>
+        <div class="cs-lead" style="margin-top:10px;">${CS.about || csData.info || ''}</div>
       </div>
 
       <div class="cs-stats">
-        <div class="cs-stat"><div class="cs-stat-num" data-count="${CS.weeks}">0</div><div class="cs-stat-label">недель<br>интенсива</div></div>
-        <div class="cs-stat"><div class="cs-stat-num" data-count="${stages.length || 3}">0</div><div class="cs-stat-label">этапа<br>отбора</div></div>
-        <div class="cs-stat"><div class="cs-stat-num">1–3</div><div class="cs-stat-label">весь подиум секции Авито, Cup Russia 2025</div></div>
+        ${(CS.stats || []).map(s => `
+          <div class="cs-stat">
+            <div class="cs-stat-num" ${/^\d+$/.test(s.num) ? `data-count="${s.num}"` : ''}>${/^\d+$/.test(s.num) ? 0 : s.num}</div>
+            <div class="cs-stat-label">${s.label}</div>
+          </div>`).join('')}
       </div>
 
       <div>
         <div class="cs-h2">Что тебя ждёт</div>
         <div class="cs-tiles" style="margin-top:12px;">
-          <div class="cs-tile"><div class="cs-tile-ic">📚</div><div><div class="cs-tile-t">${CS.weeks} недель интенсива</div><div class="cs-tile-d">Обучение от победителей прошлых лет — тех, кто сам выигрывал чемпионаты.</div></div></div>
-          <div class="cs-tile"><div class="cs-tile-ic">🤝</div><div><div class="cs-tile-t">Менторство</div><div class="cs-tile-d">Поддержка ментора для участия в Cup Russia.</div></div></div>
-          <div class="cs-tile"><div class="cs-tile-ic">🎓</div><div><div class="cs-tile-t">Диплом</div><div class="cs-tile-d">Документ о прохождении программы — в резюме и на собеседовании.</div></div></div>
-          <div class="cs-tile"><div class="cs-tile-ic">🎁</div><div><div class="cs-tile-t">Подарки</div><div class="cs-tile-d">У участников есть возможность получить подарки.</div></div></div>
+          ${(CS.benefits || []).map(b => `
+            <div class="cs-tile">
+              <div class="cs-tile-ic">${b.icon || '•'}</div>
+              <div><div class="cs-tile-t">${b.title}</div><div class="cs-tile-d">${b.text || ''}</div></div>
+            </div>`).join('')}
         </div>
       </div>
 
@@ -1278,9 +1292,8 @@ function renderCs() {
         <div class="cs-h2">Результаты учеников</div>
         <div class="cs-note" style="margin:8px 0 4px;">Наши ученики — главный показатель того, как работает программа.</div>
         <div class="cs-wins">
-          <div class="cs-win"><div class="cs-win-ic">🏆</div><div>Забрали <b>весь подиум</b> в секции Авито на Cup Russia 2025</div></div>
-          <div class="cs-win"><div class="cs-win-ic">🥇</div><div>Выиграли кейс-чемпионаты от <b>БСПБ</b> и <b>GRP</b></div></div>
-          <div class="cs-win"><div class="cs-win-ic">🧠</div><div>Получили эксклюзивные знания и навыки решения кейсов</div></div>
+          ${(CS.wins || []).map(w => `
+            <div class="cs-win"><div class="cs-win-ic">${w.icon || '•'}</div><div>${w.text}</div></div>`).join('')}
         </div>
       </div>
 
@@ -1290,7 +1303,7 @@ function renderCs() {
         <div class="cs-gallery" id="csGallery" onscroll="csSyncDots()">
           ${(CS.photos.length ? CS.photos : [null, null, null]).map(p => `
             <div class="cs-shot">
-              ${p ? `<img src="${p.src}" alt="${p.caption || ''}" loading="lazy">${p.caption ? `<div class="cs-shot-cap">${p.caption}</div>` : ''}`
+              ${p ? `<img data-cs-src="${p.src}" alt="${p.caption || ''}">${p.caption ? `<div class="cs-shot-cap">${p.caption}</div>` : ''}`
                   : `<div class="cs-shot-stub"><span>Фото скоро</span></div>`}
             </div>`).join('')}
         </div>
@@ -1302,9 +1315,11 @@ function renderCs() {
       <div>
         <div class="cs-h2">Как попасть</div>
         <div class="cs-steps" style="margin-top:8px;">
-          <div class="cs-step"><div class="cs-step-n">01</div><div><div class="cs-step-t">Заполнить форму</div><div class="cs-step-d">Регистрация открыта до ${CS.deadline}. Участвовать могут студенты всех университетов Санкт-Петербурга.</div></div></div>
-          <div class="cs-step"><div class="cs-step-n">02</div><div><div class="cs-step-t">Пройти отбор</div><div class="cs-step-d">Ссылка на первый этап придёт на почту после регистрации. Все этапы и ваши результаты — во вкладке «Отбор».</div></div></div>
-          <div class="cs-step"><div class="cs-step-n">03</div><div><div class="cs-step-t">Учиться и побеждать</div><div class="cs-step-d">${CS.weeks} недель занятий, менторство для Cup Russia и диплом в конце.</div></div></div>
+          ${(CS.steps || []).map((s, i) => `
+            <div class="cs-step">
+              <div class="cs-step-n">0${i + 1}</div>
+              <div><div class="cs-step-t">${s.title}</div><div class="cs-step-d">${s.text || ''}</div></div>
+            </div>`).join('')}
         </div>
       </div>
 
@@ -1320,14 +1335,15 @@ function renderCs() {
       </div>
 
       <div class="cs-cta">
-        <div class="cs-cta-t">Набор на ${CS.season} открыт</div>
-        <div class="cs-cta-d">Дедлайн регистрации — ${CS.deadline}. Ссылка на первый этап отбора придёт на почту.</div>
+        <div class="cs-cta-t">${CS.cta_title} · ${CS.season}</div>
+        <div class="cs-cta-d">Дедлайн регистрации — ${CS.deadline}. ${CS.cta_text}</div>
         <a class="cs-cta-btn" href="${CS.formUrl}" target="_blank">Подать заявку</a>
       </div>
 
     </div>`;
 
   csAnimateStats();
+  csLoadPhotos();
 
   const joined = !!csData.joined;
   document.getElementById('csSelectionPane').innerHTML = `
@@ -1351,6 +1367,25 @@ function csToggleWant(i) {
   if (n === 0) v.innerHTML = 'Отметьте пункты выше — покажем, стоит ли вам идти на программу.';
   else if (n <= 2) v.innerHTML = `<b>Похоже, вам стоит попробовать.</b> На программе как раз это и прокачивают — за ${CS.weeks} недель с теми, кто сам выигрывал чемпионаты.`;
   else v.innerHTML = `<b>Это точно про вас.</b> Подавайте заявку — регистрация открыта до ${CS.deadline}.`;
+}
+
+function csPhotoFallback(img) {
+  const shot = img.closest('.cs-shot');
+  if (shot) shot.innerHTML = '<div class="cs-shot-stub"><span>Фото скоро</span></div>';
+}
+
+// Фото галереи грузим через fetch+blob — так же, как баннеры мероприятий
+// (иначе ngrok подставляет страницу-предупреждение вместо картинки)
+async function csLoadPhotos() {
+  document.querySelectorAll('#csInfoPane img[data-cs-src]').forEach(async img => {
+    const src = img.getAttribute('data-cs-src');
+    img.removeAttribute('data-cs-src');
+    if (!src) return;
+    if (!/^https?:/i.test(src)) { img.src = src; img.onerror = () => csPhotoFallback(img); return; }
+    const blobUrl = await loadBannerBlob(src);
+    if (blobUrl) img.src = blobUrl;
+    else csPhotoFallback(img);
+  });
 }
 
 function csToggleFaq(i) {
