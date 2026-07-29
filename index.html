@@ -238,8 +238,10 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .cs-qa.open .cs-q { border-bottom: none; }
 .cs-q-ic { flex-shrink: 0; width: 20px; height: 20px; color: var(--accent); transition: transform .28s var(--ease); font-size: 18px; line-height: 20px; text-align: center; }
 .cs-qa.open .cs-q-ic { transform: rotate(45deg); }
-.cs-a { max-height: 0; overflow: hidden; transition: max-height .32s var(--ease); font-size: 13.5px; color: var(--text-sec); line-height: 1.6; padding: 0 16px; }
-.cs-qa.open .cs-a { max-height: 260px; padding-bottom: 15px; }
+.cs-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s var(--ease); }
+.cs-a-in { overflow: hidden; min-height: 0; }
+.cs-a-body { font-size: 13.5px; color: var(--text-sec); line-height: 1.6; padding: 0 16px 15px; }
+.cs-qa.open .cs-a { grid-template-rows: 1fr; }
 .cs-qa:not(:last-child).open { border-bottom: 1px solid var(--line); }
 
 .cs-cta { background: var(--ink); border-radius: var(--radius); padding: 22px 20px; color: #fff; text-align: center; }
@@ -817,6 +819,63 @@ async function apiCall(endpoint, opts = {}) {
   return res.json();
 }
 
+// ── КЭШ ЗАПРОСОВ ──
+// Схема «показать из кэша → обновить в фоне» (stale-while-revalidate):
+// вкладка открывается мгновенно, сеть дёргается только если данные устарели.
+const CACHE_TTL = 45000;          // сколько данные считаются свежими
+const CACHE_TTL_LONG = 600000;    // для редко меняющегося (список вузов)
+const memCache = new Map();
+const inFlight = new Map();
+
+function readCache(ep) {
+  if (memCache.has(ep)) return memCache.get(ep);
+  try {
+    const raw = localStorage.getItem('hscc:' + ep);
+    if (raw) { const v = JSON.parse(raw); memCache.set(ep, v); return v; }
+  } catch (e) {}
+  return null;
+}
+
+function writeCache(ep, data) {
+  const v = { data, ts: Date.now() };
+  memCache.set(ep, v);
+  try { localStorage.setItem('hscc:' + ep, JSON.stringify(v)); } catch (e) {}
+}
+
+function dropCache(...eps) {
+  eps.forEach(ep => {
+    memCache.delete(ep);
+    try { localStorage.removeItem('hscc:' + ep); } catch (e) {}
+  });
+}
+
+// Один запрос на эндпоинт, даже если его попросили несколько экранов сразу
+function apiGet(ep) {
+  if (inFlight.has(ep)) return inFlight.get(ep);
+  const p = apiCall(ep)
+    .then(d => { writeCache(ep, d); inFlight.delete(ep); return d; })
+    .catch(e => { inFlight.delete(ep); throw e; });
+  inFlight.set(ep, p);
+  return p;
+}
+
+// Отдаёт кэш сразу, затем при необходимости обновляет и перерисовывает
+async function withCache(ep, render, ttl = CACHE_TTL) {
+  const hit = readCache(ep);
+  if (hit) {
+    try { render(hit.data); } catch (e) { console.warn(e); }
+    if (Date.now() - hit.ts < ttl) return hit.data;
+  }
+  const fresh = await apiGet(ep);
+  if (!hit || JSON.stringify(fresh) !== JSON.stringify(hit.data)) render(fresh);
+  return fresh;
+}
+
+// Возврат в приложение — считаем данные устаревшими
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) memCache.forEach(v => { v.ts = 0; });
+});
+
 // ── VALIDATION ──
 function validateFullName(name) {
   // ФИО — минимум 3 слова, каждое от 2 букв
@@ -850,12 +909,19 @@ function clearFormErrors(prefix) {
 
 // ── UNIVERSITIES ──
 async function loadUniversities() {
-  try {
-    const data = await apiCall('/api/universities');
+  const fill = data => {
     universitiesList = data.universities || [];
+    fillUniSelects();
+  };
+  try {
+    await withCache('/api/universities', fill, CACHE_TTL_LONG);
   } catch (e) {
     universitiesList = ['НИУ ВШЭ', 'МГУ им. Ломоносова', 'МФТИ', 'РАНХиГС', 'МГИМО'];
+    fillUniSelects();
   }
+}
+
+function fillUniSelects() {
   ['onbUni', 'editUni'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
@@ -1002,11 +1068,27 @@ async function init() {
 
   loadUniversities();
 
-  try {
-    const me = await apiCall('/api/me');
+  const applyMe = me => {
     isAdmin = !!me.is_admin;
     myProfile = me.user || null;
     emailVerifEnabled = !!me.email_verification_enabled;
+  };
+
+  // Если в кэше уже есть профиль — сразу строим меню и грузим события,
+  // не дожидаясь ответа сервера
+  const cachedMe = readCache('/api/me');
+  let eventsPromise = null;
+  if (cachedMe && !cachedMe.data.needs_onboarding) {
+    applyMe(cachedMe.data);
+    buildNav();
+    showScreen('events');
+    setNav(document.getElementById('nav-events'));
+    eventsPromise = loadEvents();
+  }
+
+  try {
+    const me = await apiGet('/api/me');
+    applyMe(me);
     if (me.needs_onboarding) {
       showScreen('onboarding');
       document.getElementById('onbName').value =
@@ -1015,11 +1097,11 @@ async function init() {
       return;
     }
   } catch (e) {
-    isAdmin = false;
+    if (!cachedMe) isAdmin = false;
   }
 
   buildNav();
-  await loadEvents();
+  await (eventsPromise || loadEvents());
 
   // Принудительно показываем экран events после инициализации
   // (на случай если class="active" слетел)
@@ -1105,6 +1187,7 @@ async function submitProfile(prefix, btnId, isFirstTime) {
       })
     });
     myProfile = res.user;
+    dropCache('/api/me');
 
     if (isFirstTime) {
       buildNav();
@@ -1223,14 +1306,19 @@ function csStageCard(s, i, withProgress) {
 }
 
 async function loadCaseStudy() {
-  try {
-    csData = await apiCall('/api/cs');
+  const render = data => {
+    csData = data;
     CS = Object.assign({}, CS_DEFAULT, csData.page || {});
     renderCs();
+  };
+  try {
+    await withCache('/api/cs', render);
   } catch (e) {
-    const err = `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
-    document.getElementById('csInfoPane').innerHTML = err;
-    document.getElementById('csSelectionPane').innerHTML = err;
+    if (!readCache('/api/cs')) {
+      const err = `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+      document.getElementById('csInfoPane').innerHTML = err;
+      document.getElementById('csSelectionPane').innerHTML = err;
+    }
   }
 }
 
@@ -1329,7 +1417,7 @@ function renderCs() {
           ${CS.faq.map((f, i) => `
             <div class="cs-qa" id="csQa${i}">
               <div class="cs-q" onclick="csToggleFaq(${i})">${f.q}<div class="cs-q-ic">+</div></div>
-              <div class="cs-a">${f.a}</div>
+              <div class="cs-a"><div class="cs-a-in"><div class="cs-a-body">${f.a}</div></div></div>
             </div>`).join('')}
         </div>
       </div>
@@ -1418,6 +1506,7 @@ function csAnimateStats() {
 async function csJoin() {
   try {
     const res = await apiCall('/api/cs/join', { method: 'POST' });
+    dropCache('/api/cs');
     csData.joined = true;
     renderCs();
     showSuccess(
@@ -1539,15 +1628,18 @@ function bannerHTML(ev, sizeClass = '') {
 }
 
 async function loadEvents() {
+  const applyEvents = d => { allEvents = d.events || []; renderEvents(); };
+  const applyRegs = d => {
+    myRegList = d.registrations || [];
+    myRegistrations = new Set(myRegList.map(r => r.event_id));
+    if (allEvents.length) renderEvents();
+  };
   try {
-    const data = await apiCall('/api/events');
-    allEvents = data.events;
-    try {
-      const myData = await apiCall('/api/my/registrations');
-      myRegList = myData.registrations;
-      myRegistrations = new Set(myRegList.map(r => r.event_id));
-    } catch (e) { myRegistrations = new Set(); myRegList = []; }
-    renderEvents();
+    // Оба запроса уходят одновременно, а не один за другим
+    await Promise.all([
+      withCache('/api/events', applyEvents),
+      withCache('/api/my/registrations', applyRegs).catch(() => {}),
+    ]);
   } catch (e) {
     document.getElementById('eventsList').innerHTML = `
       <div class="empty-state">
@@ -1684,6 +1776,7 @@ async function confirmRegistration() {
       body: JSON.stringify({ event_id: currentEvent.id })
     });
     myRegistrations.add(currentEvent.id);
+    dropCache('/api/events', '/api/my/registrations', '/api/me');
     await loadEvents();
     // Та же логика, что на сервере при регистрации (is_external)
     const uniSaved = (myProfile?.university_other || myProfile?.university || '').trim().toUpperCase();
@@ -1727,9 +1820,8 @@ async function loadTickets() {
       <h1 class="screen-title">Мои события</h1>
       <div class="brand-ribbon"></div>
     </div>`;
-  try {
-    const data = await apiCall('/api/my/registrations');
-    myRegList = data.registrations;
+  const render = data => {
+    myRegList = data.registrations || [];
     if (!myRegList.length) {
       wrap.innerHTML = head + `
         <div class="empty-state">
@@ -1764,8 +1856,14 @@ async function loadTickets() {
       </div>` : '')
       + (upcoming.length ? `<div class="sched">${upcoming.map(item).join('')}</div>` : '')
       + (past.length ? `<div class="ticket-list-title" style="margin:22px 0 0;">Прошедшие</div><div class="sched" style="margin-top:10px;border-top-color:var(--hair);">${past.map(item).join('')}</div>` : '');
+  };
+
+  try {
+    await withCache('/api/my/registrations', render);
   } catch (e) {
-    wrap.innerHTML = head + `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+    if (!readCache('/api/my/registrations')) {
+      wrap.innerHTML = head + `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+    }
   }
 }
 
@@ -1785,8 +1883,7 @@ function pluralDays(n) {
 }
 
 async function loadProfile() {
-  try {
-    const data = await apiCall('/api/me');
+  const render = data => {
     myProfile = data.user || {};
     emailVerifEnabled = !!data.email_verification_enabled;
     const u = myProfile;
@@ -1858,24 +1955,34 @@ async function loadProfile() {
       + cell('Телефон', u.phone, { mono: true })
       + cell('Гражданство', u.is_foreign ? 'Иностранное' : 'РФ')
       + (u.is_foreign ? cell('ФИО латиницей', latName, { wide: true }) : '');
+  };
+
+  try {
+    await withCache('/api/me', render);
   } catch (e) {
-    document.getElementById('profileUpcoming').innerHTML =
-      `<div style="color:var(--danger);font-size:13px;padding:8px;">Не удалось загрузить профиль: ${e.message}</div>`;
+    if (!readCache('/api/me')) {
+      document.getElementById('profileUpcoming').innerHTML =
+        `<div style="color:var(--danger);font-size:13px;padding:8px;">Не удалось загрузить профиль: ${e.message}</div>`;
+    }
   }
 }
 
 // ── ADMIN ──
 async function loadAdminStats() {
-  try {
-    const data = await apiCall('/api/admin/stats');
+  const render = data => {
     document.getElementById('statsGrid').innerHTML = `
       <div class="stat-card"><div class="stat-num">${data.total_users}</div><div class="stat-label">Всего пользователей</div></div>
       <div class="stat-card"><div class="stat-num">${data.upcoming_events}</div><div class="stat-label">Активных событий</div></div>
       <div class="stat-card"><div class="stat-num">${data.total_registrations}</div><div class="stat-label">Регистраций</div></div>
       <div class="stat-card"><div class="stat-num">${data.external_guests}</div><div class="stat-label">Внешних гостей</div></div>
     `;
+  };
+  try {
+    await withCache('/api/admin/stats', render);
   } catch (e) {
-    document.getElementById('statsGrid').innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label" style="color:var(--danger);">${e.message}</div></div>`;
+    if (!readCache('/api/admin/stats')) {
+      document.getElementById('statsGrid').innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label" style="color:var(--danger);">${e.message}</div></div>`;
+    }
   }
 }
 
