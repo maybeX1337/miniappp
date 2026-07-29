@@ -172,6 +172,82 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .callout-title { font-weight: 750; margin-bottom: 4px; }
 .ticket-list-title { font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-muted); }
 
+
+/* ── Case Study: страница-лендинг ── */
+.cs-page { display: flex; flex-direction: column; gap: 26px; padding-bottom: 8px; }
+.cs-hero { position: relative; overflow: hidden; background: var(--grad-brand); border-radius: var(--radius); padding: 22px 20px; color: #fff; box-shadow: 0 12px 30px rgba(46,69,255,0.26); animation: rise .5s var(--ease) both; }
+.cs-hero-mark { position: absolute; right: -14px; bottom: -26px; font-family: 'Unbounded', sans-serif; font-size: 86px; font-weight: 900; letter-spacing: -3px; color: rgba(255,255,255,0.12); pointer-events: none; user-select: none; }
+.cs-hero-season { font-size: 9.5px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase; color: rgba(255,255,255,0.85); position: relative; z-index: 1; }
+.cs-hero-title { font-family: 'Unbounded', sans-serif; font-size: 26px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.06; margin: 10px 0 10px; position: relative; z-index: 1; }
+.cs-hero-sub { font-size: 13.5px; line-height: 1.55; color: rgba(255,255,255,0.9); position: relative; z-index: 1; max-width: 94%; }
+.cs-hero-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; position: relative; z-index: 1; flex-wrap: wrap; }
+.cs-hero-btn { flex: 1; min-width: 150px; padding: 14px 18px; background: #fff; color: var(--accent); border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; text-align: center; transition: transform .15s var(--ease); }
+.cs-hero-btn:active { transform: scale(.97); }
+.cs-deadline { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.28); }
+
+.cs-lead { font-size: 15px; line-height: 1.7; white-space: pre-line; padding: 0 2px; }
+.cs-lead b { font-weight: 700; }
+.cs-h2 { font-family: 'Unbounded', sans-serif; font-size: 19px; font-weight: 900; letter-spacing: -0.4px; line-height: 1.2; margin-bottom: 4px; padding: 0 2px; }
+.cs-note { font-size: 13px; color: var(--text-sec); line-height: 1.55; padding: 0 2px; margin-top: -6px; }
+
+.cs-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cs-stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 15px 12px; text-align: center; }
+.cs-stat-num { font-family: 'Unbounded', sans-serif; font-size: 26px; font-weight: 900; color: var(--accent); letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
+.cs-stat-label { font-size: 10.5px; color: var(--text-sec); line-height: 1.35; margin-top: 7px; }
+
+.cs-tiles { display: flex; flex-direction: column; gap: 8px; }
+.cs-tile { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 15px 16px; display: flex; gap: 13px; align-items: flex-start; }
+.cs-tile-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+.cs-tile-t { font-size: 14.5px; font-weight: 700; letter-spacing: -0.1px; }
+.cs-tile-d { font-size: 13px; color: var(--text-sec); line-height: 1.5; margin-top: 3px; }
+
+.cs-check { display: flex; flex-direction: column; gap: 8px; }
+.cs-check-item { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; line-height: 1.4; transition: border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease); }
+.cs-check-item:active { transform: scale(.99); }
+.cs-check-item.on { border-color: var(--accent); background: var(--accent-dim2); }
+.cs-check-box { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 13px; font-weight: 700; transition: background .2s, border-color .2s, color .2s; }
+.cs-check-item.on .cs-check-box { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cs-verdict { font-size: 13.5px; line-height: 1.6; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--accent-dim2); border: 1px solid rgba(46,69,255,0.16); border-left: 3px solid var(--accent); }
+
+.cs-wins { display: flex; flex-direction: column; }
+.cs-win { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 14px 2px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.45; }
+.cs-win:last-child { border-bottom: none; }
+.cs-win-ic { color: var(--accent); font-size: 15px; line-height: 1.4; }
+
+.cs-gallery { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 20px; margin: 0 -20px; scrollbar-width: none; }
+.cs-gallery::-webkit-scrollbar { display: none; }
+.cs-shot { flex: 0 0 78%; scroll-snap-align: center; aspect-ratio: 4/3; border-radius: var(--radius-sm); overflow: hidden; background: linear-gradient(150deg, #D8DDEA 0%, #EDF0F6 100%); display: flex; align-items: flex-end; position: relative; }
+.cs-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cs-shot-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 14px 12px; font-size: 12px; font-weight: 600; color: #fff; background: linear-gradient(rgba(12,17,34,0), rgba(12,17,34,0.72)); }
+.cs-shot-stub { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--text-muted); }
+.cs-shot-stub span { font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+.cs-dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.cs-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background .25s, width .25s; }
+.cs-dot.on { background: var(--accent); width: 18px; border-radius: 3px; }
+
+.cs-steps { display: flex; flex-direction: column; }
+.cs-step { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 16px 2px; border-bottom: 1px solid var(--line); }
+.cs-step:last-child { border-bottom: none; }
+.cs-step-n { font-family: 'Unbounded', sans-serif; font-size: 24px; font-weight: 900; color: rgba(12,17,34,0.14); letter-spacing: -1px; line-height: 1; }
+.cs-step-t { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+.cs-step-d { font-size: 13px; color: var(--text-sec); line-height: 1.55; margin-top: 4px; }
+
+.cs-faq { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.cs-q { padding: 15px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 650; line-height: 1.4; border-bottom: 1px solid var(--line); }
+.cs-qa:last-child .cs-q { border-bottom: none; }
+.cs-qa.open .cs-q { border-bottom: none; }
+.cs-q-ic { flex-shrink: 0; width: 20px; height: 20px; color: var(--accent); transition: transform .28s var(--ease); font-size: 18px; line-height: 20px; text-align: center; }
+.cs-qa.open .cs-q-ic { transform: rotate(45deg); }
+.cs-a { max-height: 0; overflow: hidden; transition: max-height .32s var(--ease); font-size: 13.5px; color: var(--text-sec); line-height: 1.6; padding: 0 16px; }
+.cs-qa.open .cs-a { max-height: 260px; padding-bottom: 15px; }
+.cs-qa:not(:last-child).open { border-bottom: 1px solid var(--line); }
+
+.cs-cta { background: var(--ink); border-radius: var(--radius); padding: 22px 20px; color: #fff; text-align: center; }
+.cs-cta-t { font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 900; line-height: 1.25; letter-spacing: -0.4px; }
+.cs-cta-d { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.55; margin: 9px 0 18px; }
+.cs-cta-btn { display: block; padding: 15px; background: var(--accent); color: #fff; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none; transition: transform .15s var(--ease); }
+.cs-cta-btn:active { transform: scale(.97); }
+
 /* ── Case Study: этапы с нумерацией ── */
 .cs-card { padding: 2px 2px 0; font-size: 14.5px; line-height: 1.7; white-space: pre-line; animation: rise .5s var(--ease) both; }
 .stage-list { display: flex; flex-direction: column; }
@@ -209,7 +285,8 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .pf-v { font-size: 14.5px; font-weight: 650; line-height: 1.35; word-break: break-word; }
 .pf-v.mono { font-variant-numeric: tabular-nums; }
 
-.upcoming-card { background: var(--ink); border-radius: var(--radius); padding: 22px 20px; color: white; }
+.upcoming-card { background: var(--ink); border-radius: var(--radius); padding: 22px 20px; color: white; cursor: pointer; transition: transform .16s var(--ease); }
+.upcoming-card:active { transform: scale(.98); }
 .upcoming-countdown { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #7B8AFF; margin-bottom: 8px; font-weight: 700; }
 .upcoming-title { font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 900; line-height: 1.25; margin-bottom: 16px; }
 .upcoming-meta-row { display: flex; gap: 8px; }
@@ -704,14 +781,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 <script>
 // ⚠️ ВАЖНО: вписать актуальный URL ngrok / задеплоенного API
-// Запасной адрес API — используется, когда страница открыта не с самого сервера
-// (GitHub Pages или локальный файл). ⚠️ Здесь должен быть актуальный URL ngrok.
-const API_FALLBACK = 'https://extradite-entering-remover.ngrok-free.dev';
-
-// Если страницу отдал сам API (адрес вида .../app) — работаем с ним же
-const API_URL = (location.protocol === 'https:' && !location.hostname.endsWith('github.io'))
-  ? location.origin
-  : API_FALLBACK;
+const API_URL = 'https://extradite-entering-remover.ngrok-free.dev';
 
 let allEvents = [];
 let currentEvent = null;
@@ -1076,6 +1146,29 @@ function openEditProfile() {
 }
 
 // ── CASE STUDY ──
+// ⚙️ Данные сезона: меняются раз в набор
+const CS = {
+  season: "Winter'26",
+  weeks: 5,
+  deadline: '19 января',
+  formUrl: 'https://forms.yandex.ru/cloud/69540294eb6146d8a84f0b2e/',
+  wants: [
+    'Хочу побеждать в престижных кейс-чемпионатах',
+    'Хочу найти единомышленников',
+    'Хочу опыт для сильного старта карьеры',
+    'Хочу уверенно презентовать решения перед экспертами',
+  ],
+  faq: [
+    { q: 'Кто может участвовать?', a: 'Студенты всех университетов Санкт-Петербурга.' },
+    { q: 'Сколько длится программа?', a: '5 недель интенсивного обучения от победителей прошлых лет.' },
+    { q: 'Как проходит отбор?', a: 'Отбор идёт в несколько этапов. Ссылка на первый придёт на почту, которую вы указали при регистрации.' },
+    { q: 'Что получу в конце?', a: 'Диплом о прохождении программы и менторство для участия в Cup Russia.' },
+    { q: 'До какого числа регистрация?', a: 'Заявки принимаем до 19 января.' },
+  ],
+  // Фото галереи: { src: 'ссылка или путь', caption: 'подпись' }
+  photos: [],
+};
+
 let csData = null;
 
 function switchCsTab(tab) {
@@ -1134,24 +1227,157 @@ function renderCs() {
   const stages = csData.stages || [];
 
   document.getElementById('csInfoPane').innerHTML = `
-    <div class="cs-card">${csData.info || ''}</div>
-    <div class="profile-section-title" style="margin-top:26px;">Этапы отбора</div>
-    <div class="stage-list">${stages.map((s, i) => csStageCard(s, i, false)).join('')}</div>
-    <div class="profile-section-title" style="margin-top:20px;">Как это было</div>
-    <div class="cs-photos">
-      <div class="cs-photo-stub">Фото скоро</div>
-      <div class="cs-photo-stub">Фото скоро</div>
-      <div class="cs-photo-stub">Фото скоро</div>
-      <div class="cs-photo-stub">Фото скоро</div>
+    <div class="cs-page">
+
+      <div class="cs-hero">
+        <div class="cs-hero-mark">CS</div>
+        <div class="cs-hero-season">HSCC Case Study · ${CS.season}</div>
+        <div class="cs-hero-title">Программа подготовки к кейс-чемпионатам</div>
+        <div class="cs-hero-sub">${CS.weeks} недель интенсива от победителей прошлых лет, менторство для Cup Russia и диплом о прохождении.</div>
+        <div class="cs-hero-row">
+          <a class="cs-hero-btn" href="${CS.formUrl}" target="_blank">Зарегистрироваться</a>
+          <div class="cs-deadline">до ${CS.deadline}</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Что это такое</div>
+        <div class="cs-lead" style="margin-top:10px;">${csData.info || ''}</div>
+      </div>
+
+      <div class="cs-stats">
+        <div class="cs-stat"><div class="cs-stat-num" data-count="${CS.weeks}">0</div><div class="cs-stat-label">недель<br>интенсива</div></div>
+        <div class="cs-stat"><div class="cs-stat-num" data-count="${stages.length || 3}">0</div><div class="cs-stat-label">этапа<br>отбора</div></div>
+        <div class="cs-stat"><div class="cs-stat-num">1–3</div><div class="cs-stat-label">весь подиум секции Авито, Cup Russia 2025</div></div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Что тебя ждёт</div>
+        <div class="cs-tiles" style="margin-top:12px;">
+          <div class="cs-tile"><div class="cs-tile-ic">📚</div><div><div class="cs-tile-t">${CS.weeks} недель интенсива</div><div class="cs-tile-d">Обучение от победителей прошлых лет — тех, кто сам выигрывал чемпионаты.</div></div></div>
+          <div class="cs-tile"><div class="cs-tile-ic">🤝</div><div><div class="cs-tile-t">Менторство</div><div class="cs-tile-d">Поддержка ментора для участия в Cup Russia.</div></div></div>
+          <div class="cs-tile"><div class="cs-tile-ic">🎓</div><div><div class="cs-tile-t">Диплом</div><div class="cs-tile-d">Документ о прохождении программы — в резюме и на собеседовании.</div></div></div>
+          <div class="cs-tile"><div class="cs-tile-ic">🎁</div><div><div class="cs-tile-t">Подарки</div><div class="cs-tile-d">У участников есть возможность получить подарки.</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Подходит ли тебе?</div>
+        <div class="cs-note" style="margin:8px 0 12px;">Отметьте то, что про вас.</div>
+        <div class="cs-check">
+          ${CS.wants.map((w, i) => `
+            <div class="cs-check-item" onclick="csToggleWant(${i})" id="csWant${i}">
+              <div class="cs-check-box">✓</div>
+              <div>${w}</div>
+            </div>`).join('')}
+        </div>
+        <div class="cs-verdict" id="csVerdict" style="margin-top:12px;">Отметьте пункты выше — покажем, стоит ли вам идти на программу.</div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Результаты учеников</div>
+        <div class="cs-note" style="margin:8px 0 4px;">Наши ученики — главный показатель того, как работает программа.</div>
+        <div class="cs-wins">
+          <div class="cs-win"><div class="cs-win-ic">🏆</div><div>Забрали <b>весь подиум</b> в секции Авито на Cup Russia 2025</div></div>
+          <div class="cs-win"><div class="cs-win-ic">🥇</div><div>Выиграли кейс-чемпионаты от <b>БСПБ</b> и <b>GRP</b></div></div>
+          <div class="cs-win"><div class="cs-win-ic">🧠</div><div>Получили эксклюзивные знания и навыки решения кейсов</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Как это было</div>
+        <div class="cs-note" style="margin:8px 0 12px;">Занятия, финалы и наши команды на чемпионатах.</div>
+        <div class="cs-gallery" id="csGallery" onscroll="csSyncDots()">
+          ${(CS.photos.length ? CS.photos : [null, null, null]).map(p => `
+            <div class="cs-shot">
+              ${p ? `<img src="${p.src}" alt="${p.caption || ''}" loading="lazy">${p.caption ? `<div class="cs-shot-cap">${p.caption}</div>` : ''}`
+                  : `<div class="cs-shot-stub"><span>Фото скоро</span></div>`}
+            </div>`).join('')}
+        </div>
+        <div class="cs-dots" id="csDots">
+          ${(CS.photos.length ? CS.photos : [null, null, null]).map((_, i) => `<div class="cs-dot${i === 0 ? ' on' : ''}"></div>`).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Как попасть</div>
+        <div class="cs-steps" style="margin-top:8px;">
+          <div class="cs-step"><div class="cs-step-n">01</div><div><div class="cs-step-t">Заполнить форму</div><div class="cs-step-d">Регистрация открыта до ${CS.deadline}. Участвовать могут студенты всех университетов Санкт-Петербурга.</div></div></div>
+          <div class="cs-step"><div class="cs-step-n">02</div><div><div class="cs-step-t">Пройти отбор</div><div class="cs-step-d">Ссылка на первый этап придёт на почту после регистрации. Все этапы и ваши результаты — во вкладке «Отбор».</div></div></div>
+          <div class="cs-step"><div class="cs-step-n">03</div><div><div class="cs-step-t">Учиться и побеждать</div><div class="cs-step-d">${CS.weeks} недель занятий, менторство для Cup Russia и диплом в конце.</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cs-h2">Частые вопросы</div>
+        <div class="cs-faq" style="margin-top:12px;">
+          ${CS.faq.map((f, i) => `
+            <div class="cs-qa" id="csQa${i}">
+              <div class="cs-q" onclick="csToggleFaq(${i})">${f.q}<div class="cs-q-ic">+</div></div>
+              <div class="cs-a">${f.a}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="cs-cta">
+        <div class="cs-cta-t">Набор на ${CS.season} открыт</div>
+        <div class="cs-cta-d">Дедлайн регистрации — ${CS.deadline}. Ссылка на первый этап отбора придёт на почту.</div>
+        <a class="cs-cta-btn" href="${CS.formUrl}" target="_blank">Подать заявку</a>
+      </div>
+
     </div>`;
+
+  csAnimateStats();
 
   const joined = !!csData.joined;
   document.getElementById('csSelectionPane').innerHTML = `
     ${joined
-      ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(46,125,91,0.4);border-left-color:var(--success);background:rgba(46,125,91,0.06);"><div class="callout-title" style="color:var(--success);">Вы участвуете в отборе</div>Ссылки на этапы открываются, когда этап начинается. Результаты придут в бота.</div>'
-      : '<div class="cs-card" style="margin-bottom:18px;">Отбор проходит в три этапа: тест, видео-визитка и интервью с мини-кейсом. Нажмите «Участвовать» — прогресс будет отображаться здесь.</div>'}
+      ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(11,166,120,0.35);background:rgba(11,166,120,0.07);"><div class="callout-title">Вы участвуете в отборе</div>Ссылки на этапы открываются, когда этап начинается. Результаты придут в бота.</div>'
+      : `<div class="cs-lead" style="margin-bottom:18px;">Регистрация на ${CS.season} идёт до ${CS.deadline} — по форме на сайте. Здесь отмечайте участие, чтобы видеть этапы и свои результаты.</div>
+         <a class="btn btn-primary" style="margin-bottom:10px;" href="${CS.formUrl}" target="_blank">Заполнить форму регистрации</a>`}
     <div class="stage-list">${stages.map((s, i) => csStageCard(s, i, true)).join('')}</div>
-    ${joined ? '' : '<button class="btn btn-primary" style="margin-top:18px;" onclick="csJoin()">Участвовать в отборе</button>'}`;
+    ${joined ? '' : '<button class="btn btn-ghost" style="margin-top:18px;" onclick="csJoin()">Я зарегистрировался — следить за этапами</button>'}`;
+}
+
+// ── Интерактив страницы Case Study ──
+const csWantState = new Set();
+
+function csToggleWant(i) {
+  const el = document.getElementById('csWant' + i);
+  if (csWantState.has(i)) { csWantState.delete(i); el.classList.remove('on'); }
+  else { csWantState.add(i); el.classList.add('on'); }
+  const n = csWantState.size;
+  const v = document.getElementById('csVerdict');
+  if (n === 0) v.innerHTML = 'Отметьте пункты выше — покажем, стоит ли вам идти на программу.';
+  else if (n <= 2) v.innerHTML = `<b>Похоже, вам стоит попробовать.</b> На программе как раз это и прокачивают — за ${CS.weeks} недель с теми, кто сам выигрывал чемпионаты.`;
+  else v.innerHTML = `<b>Это точно про вас.</b> Подавайте заявку — регистрация открыта до ${CS.deadline}.`;
+}
+
+function csToggleFaq(i) {
+  document.getElementById('csQa' + i).classList.toggle('open');
+}
+
+function csSyncDots() {
+  const g = document.getElementById('csGallery');
+  const dots = document.querySelectorAll('#csDots .cs-dot');
+  if (!g || !dots.length) return;
+  const idx = Math.round(g.scrollLeft / (g.scrollWidth / dots.length));
+  dots.forEach((d, i) => d.classList.toggle('on', i === Math.min(idx, dots.length - 1)));
+}
+
+function csAnimateStats() {
+  document.querySelectorAll('#csInfoPane .cs-stat-num[data-count]').forEach(el => {
+    const target = parseInt(el.getAttribute('data-count'), 10);
+    if (!target) { el.textContent = el.getAttribute('data-count'); return; }
+    let cur = 0;
+    const step = () => {
+      cur += Math.max(1, Math.ceil(target / 14));
+      if (cur >= target) { el.textContent = target; return; }
+      el.textContent = cur;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
 }
 
 async function csJoin() {
@@ -1565,7 +1791,7 @@ async function loadProfile() {
       const d = daysUntil(r.date);
       upcomingWrap.innerHTML = `
         <div class="profile-section-title">Ближайшее мероприятие</div>
-        <div class="upcoming-card">
+        <div class="upcoming-card" onclick="openEvent(${r.event_id})">
           <div class="upcoming-countdown">${pluralDays(d)}</div>
           <div class="upcoming-title">${r.title}</div>
           <div class="upcoming-meta-row">
