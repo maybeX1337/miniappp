@@ -704,7 +704,14 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 <script>
 // ⚠️ ВАЖНО: вписать актуальный URL ngrok / задеплоенного API
-const API_URL = 'https://extradite-entering-remover.ngrok-free.dev';
+// Запасной адрес API — используется, когда страница открыта не с самого сервера
+// (GitHub Pages или локальный файл). ⚠️ Здесь должен быть актуальный URL ngrok.
+const API_FALLBACK = 'https://extradite-entering-remover.ngrok-free.dev';
+
+// Если страницу отдал сам API (адрес вида .../app) — работаем с ним же
+const API_URL = (location.protocol === 'https:' && !location.hostname.endsWith('github.io'))
+  ? location.origin
+  : API_FALLBACK;
 
 let allEvents = [];
 let currentEvent = null;
