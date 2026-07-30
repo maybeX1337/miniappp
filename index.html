@@ -123,6 +123,8 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .detail-banner-photo { width: 100%; aspect-ratio: 16/8; object-fit: cover; display: block; }
 .detail-banner-title { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; text-transform: uppercase; line-height: 1.08; position: relative; z-index: 1; }
 .detail-content { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.detail-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent); margin-bottom: 7px; }
+.detail-title { font-family: 'Unbounded', sans-serif; font-size: 21px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.18; }
 .detail-info-row { display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 13px 0; gap: 0; }
 .detail-info-pill { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 750; border-left: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .detail-info-pill:first-child { border-left: none; }
@@ -157,10 +159,10 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 /* ── Мои события: расписание ── */
 #screen-ticket { background: var(--bg); }
 .ticket-wrap { padding: 0 20px 20px; display: flex; flex-direction: column; }
-.sched { display: flex; flex-direction: column; margin-top: 14px; }
-.sched-row { display: grid; grid-template-columns: 86px 1fr; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--line); cursor: pointer; animation: rise .5s var(--ease) both; transition: opacity .15s; }
+.sched { display: flex; flex-direction: column; margin-top: 10px; }
+.sched-row { display: grid; grid-template-columns: 82px 1fr 14px; gap: 14px; align-items: start; padding: 17px 0; border-bottom: 1px solid var(--line); cursor: pointer; animation: rise .5s var(--ease) both; transition: opacity .15s; }
 .sched-row:last-child { border-bottom: none; }
-.sched-row:active { opacity: .55; }
+.sched-row:active { opacity: .5; }
 .sched-row.past { opacity: .45; }
 .sched-date { display: flex; flex-direction: column; gap: 3px; }
 .sched-day { font-family: 'Unbounded', sans-serif; font-size: 21px; font-weight: 900; letter-spacing: -0.8px; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -168,6 +170,21 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .sched-row.past .sched-time { color: var(--text-muted); }
 .sched-title { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.28; }
 .sched-meta { font-size: 12.5px; color: var(--text-sec); margin-top: 4px; line-height: 1.5; }
+.sched-when { display: inline-block; margin-top: 7px; padding: 3px 9px; border-radius: 7px; background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.sched-when.soon { background: rgba(239,68,68,0.09); color: var(--danger); }
+.sched-go { color: var(--text-muted); padding-top: 4px; }
+.sched-go svg { width: 14px; height: 14px; display: block; }
+
+.my-summary { display: flex; gap: 16px; margin-top: 12px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-muted); }
+.my-summary b { color: var(--ink); font-weight: 800; }
+
+.notice { display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 16px; }
+.notice-ic { width: 38px; height: 38px; border-radius: 12px; background: rgba(245,158,11,0.13); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.notice-t { font-size: 14px; font-weight: 700; letter-spacing: -0.1px; }
+.notice-d { font-size: 12.5px; color: var(--text-sec); line-height: 1.55; margin-top: 3px; }
+
+.my-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); cursor: pointer; }
+
 .callout { padding: 15px 16px; border-radius: var(--radius-sm); background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.25); font-size: 13px; line-height: 1.6; }
 .callout-title { font-weight: 750; margin-bottom: 4px; }
 .ticket-list-title { font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-muted); }
@@ -494,12 +511,16 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 
 <!-- ── DETAIL ── -->
 <div id="screen-detail" class="screen">
-  <div class="detail-back" onclick="showScreen('events')">
+  <div class="detail-back" onclick="backFromDetail()">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
     Назад
   </div>
   <div id="detailBannerWrap"></div>
   <div class="detail-content">
+    <div>
+      <div class="detail-kicker" id="detailType"></div>
+      <h1 class="detail-title" id="detailTitle"></h1>
+    </div>
     <div class="detail-info-row">
       <div class="detail-info-pill">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -701,53 +722,6 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <button class="btn btn-primary" id="editSubmitBtn" onclick="submitEditProfile()" style="margin-top:8px;">
       Сохранить
     </button>
-  </div>
-</div>
-
-<!-- ── ADMIN ── -->
-<div id="screen-admin" class="screen">
-  <div class="admin-wrap">
-    <div>
-      <div class="admin-header-title">Панель организатора</div>
-      <div class="admin-header-sub">Управление мероприятиями</div>
-    </div>
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Загрузка...</div></div>
-    </div>
-    <div class="admin-actions">
-      <button class="admin-action" onclick="showAdminEvents()">
-        <div class="admin-action-icon purple">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </div>
-        <div>
-          <div class="admin-action-title">Мероприятия и Excel</div>
-          <div class="admin-action-sub">Список, статистика, выгрузка пропусков</div>
-        </div>
-        <div class="admin-action-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-      <button class="admin-action" onclick="showHint('Создание мероприятия — через бота: /start → «Управление» → «Создать мероприятие». Там можно загрузить фото и заполнить пошагово.')">
-        <div class="admin-action-icon green">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
-        <div>
-          <div class="admin-action-title">Создать мероприятие</div>
-          <div class="admin-action-sub">Через бота — пошаговый мастер</div>
-        </div>
-        <div class="admin-action-arrow"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ── ADMIN EVENTS LIST ── -->
-<div id="screen-admin-events" class="screen">
-  <div class="detail-back" onclick="navigate('admin', document.getElementById('nav-admin'))">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-    Назад в админку
-  </div>
-  <div class="section-pad">Все мероприятия</div>
-  <div class="admin-wrap" id="adminEventsList" style="padding-top:0;">
-    <div class="loading-screen"><div class="loading-spinner"></div></div>
   </div>
 </div>
 
@@ -1002,7 +976,6 @@ async function sendEmailCode(prefix) {
 const NAV_ICONS = {
   events: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="4"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>',
   ticket: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>',
-  admin: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>',
   members: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
   profile: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
 };
@@ -1016,30 +989,19 @@ function navItem(name, label, active = false) {
 }
 
 function buildNav() {
-  const nav = document.getElementById('bottomNav');
-  if (isAdmin) {
-    nav.innerHTML =
-      navItem('events', 'События', true) +
-      navItem('ticket', 'Мои события') +
-      navItem('admin', 'Управление') +
-      navItem('members', 'Case Study') +
-      navItem('profile', 'Профиль');
-  } else {
-    nav.innerHTML =
-      navItem('events', 'События', true) +
-      navItem('ticket', 'Мои события') +
-      navItem('members', 'Case Study') +
-      navItem('profile', 'Профиль');
-  }
+  // Управление вынесено в бота — в мини-аппе вкладки одинаковые для всех
+  document.getElementById('bottomNav').innerHTML =
+    navItem('events', 'События', true) +
+    navItem('ticket', 'Мои события') +
+    navItem('members', 'Case Study') +
+    navItem('profile', 'Профиль');
 }
 
 function navigate(name, el) {
-  if (name === 'admin' && !isAdmin) return;
   setNav(el);
   showScreen(name);
   if (name === 'ticket') loadTickets();
   if (name === 'profile') loadProfile();
-  if (name === 'admin') loadAdminStats();
   if (name === 'members') loadCaseStudy();
 }
 
@@ -1264,7 +1226,10 @@ const CS_DEFAULT = {
 let CS = CS_DEFAULT;
 let csData = null;
 
+let csTab = 'info';
+
 function switchCsTab(tab) {
+  csTab = tab;
   document.getElementById('csTabInfo').classList.toggle('active', tab === 'info');
   document.getElementById('csTabSelection').classList.toggle('active', tab === 'selection');
   document.getElementById('csInfoPane').style.display = tab === 'info' ? '' : 'none';
@@ -1324,6 +1289,8 @@ async function loadCaseStudy() {
 
 function renderCs() {
   const stages = csData.stages || [];
+
+  switchCsTab(csTab);   // подсветка таба не слетает после перерисовки
 
   document.getElementById('csInfoPane').innerHTML = `
     <div class="cs-page">
@@ -1686,7 +1653,7 @@ function renderEvents() {
         <span class="event-more">Подробнее →</span>
         ${isPast ? '<button class="event-register-btn registered">Завершено</button>'
           : isReg ? '<button class="event-register-btn registered">Вы записаны</button>'
-          : '<button class="event-register-btn" onclick="event.stopPropagation();openEvent(' + ev.id + ')">Записаться</button>'}
+          : '<button class="event-register-btn" onclick="event.stopPropagation();openEvent(' + ev.id + ', \'events\', true)">Записаться</button>'}
       </div>
     </div>`;
   }).join('');
@@ -1694,7 +1661,8 @@ function renderEvents() {
 }
 
 function switchTab(el, tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  // только соседние табы, иначе гасли табы Case Study
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentTab = tab;
   renderEvents();
@@ -1707,7 +1675,17 @@ function filterEvents() {
   });
 }
 
-async function openEvent(id) {
+// Откуда открыли карточку — туда и вернёмся
+let detailFrom = 'events';
+
+function backFromDetail() {
+  const navId = { events: 'nav-events', ticket: 'nav-ticket', profile: 'nav-profile' }[detailFrom] || 'nav-events';
+  showScreen(detailFrom);
+  setNav(document.getElementById(navId));
+}
+
+async function openEvent(id, from, goConfirm) {
+  detailFrom = from || 'events';
   try {
     const ev = await apiCall(`/api/events/${id}`);
     currentEvent = ev;
@@ -1725,6 +1703,8 @@ async function openEvent(id) {
         </div>`;
     }
 
+    document.getElementById('detailType').textContent = ev.type || '';
+    document.getElementById('detailTitle').textContent = ev.title || '';
     document.getElementById('detailDate').textContent = ev.date_display || ev.date;
     document.getElementById('detailTime').textContent = ev.time;
     if (ev.speaker) {
@@ -1748,7 +1728,10 @@ async function openEvent(id) {
     if (isPast) regWrap.innerHTML = `<button class="btn btn-ghost">Мероприятие завершено</button>`;
     else if (isReg) regWrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">Открыть билет</button>`;
     else regWrap.innerHTML = `<button class="btn btn-primary" onclick="openConfirm()">Зарегистрироваться</button>`;
-    showScreen('detail');
+
+    // Карточку заполнили в любом случае — чтобы «Назад» с подтверждения работал
+    if (goConfirm && !isPast && !isReg) openConfirm();
+    else showScreen('detail');
   } catch (e) { showError(e.message); }
 }
 
@@ -1777,7 +1760,11 @@ async function confirmRegistration() {
     });
     myRegistrations.add(currentEvent.id);
     dropCache('/api/events', '/api/my/registrations', '/api/me');
-    await loadEvents();
+
+    // Экран подтверждения закрываем сразу, чтобы нельзя было нажать повторно
+    navigate('ticket', document.getElementById('nav-ticket'));
+    loadEvents();
+
     // Та же логика, что на сервере при регистрации (is_external)
     const uniSaved = (myProfile?.university_other || myProfile?.university || '').trim().toUpperCase();
     const extGuest = !['ВШЭ', 'НИУ ВШЭ', 'HSE'].includes(uniSaved);
@@ -1812,6 +1799,27 @@ function closeOverlay() {
 }
 
 // ── MY EVENTS: расписание ──
+function schedItem(r, today, idx) {
+  const past = r.date < today;
+  const days = past ? null : daysUntil(r.date);
+  const soon = days !== null && days <= 3;
+  return `
+    <div class="sched-row${past ? ' past' : ''}" onclick="openEvent(${r.event_id}, 'ticket')" style="animation-delay:${Math.min(idx * 55, 300)}ms">
+      <div class="sched-date">
+        <div class="sched-day">${(r.date_display || r.date).slice(0, 5)}</div>
+        <div class="sched-time">${r.time}</div>
+      </div>
+      <div>
+        <div class="sched-title">${r.title}</div>
+        <div class="sched-meta">${[r.type, r.address].filter(Boolean).join(' · ')}</div>
+        ${past ? '' : `<span class="sched-when${soon ? ' soon' : ''}">${pluralDays(days)}</span>`}
+      </div>
+      <div class="sched-go">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>`;
+}
+
 async function loadTickets() {
   const wrap = document.getElementById('ticketWrap');
   const head = `
@@ -1820,13 +1828,15 @@ async function loadTickets() {
       <h1 class="screen-title">Мои события</h1>
       <div class="brand-ribbon"></div>
     </div>`;
+
   const render = data => {
     myRegList = data.registrations || [];
     if (!myRegList.length) {
       wrap.innerHTML = head + `
-        <div class="empty-state">
-          <div class="empty-title">Пока пусто</div>
-          <div class="empty-sub">Выберите мероприятие во вкладке «События» и нажмите «Записаться» — оно появится здесь.</div>
+        <div class="empty-state" style="align-items:flex-start;text-align:left;padding:28px 0;">
+          <div class="empty-title" style="text-align:left;">Пока пусто</div>
+          <div class="empty-sub" style="text-align:left;">Выберите мероприятие в афише и нажмите «Записаться» — оно появится здесь, а бот напомнит о нём заранее.</div>
+          <div class="my-link" style="margin-top:14px;" onclick="navigate('events', document.getElementById('nav-events'))">Открыть афишу →</div>
         </div>`;
       return;
     }
@@ -1836,26 +1846,30 @@ async function loadTickets() {
     const upcoming = myRegList.filter(r => r.date >= today);
     const past = myRegList.filter(r => r.date < today);
 
-    const item = (r, idx) => `
-      <div class="sched-row${r.date < today ? ' past' : ''}" onclick="openEvent(${r.event_id})" style="animation-delay:${Math.min(idx * 50, 300)}ms">
-        <div class="sched-date">
-          <div class="sched-day">${(r.date_display || r.date).slice(0, 5)}</div>
-          <div class="sched-time">${r.time}</div>
-        </div>
-        <div>
-          <div class="sched-title">${r.title}</div>
-          <div class="sched-meta">${[r.type, r.address].filter(Boolean).join(' · ')}</div>
-        </div>
-      </div>`;
+    wrap.innerHTML = head + `
+      <div class="my-summary">
+        <span><b>${upcoming.length}</b> ${plural(upcoming.length, 'предстоящее', 'предстоящих', 'предстоящих')}</span>
+        <span><b>${past.length}</b> ${plural(past.length, 'посещённое', 'посещённых', 'посещённых')}</span>
+      </div>
 
-    wrap.innerHTML = head
-      + (anyExt && upcoming.length ? `
-      <div class="callout" style="margin-top:12px;">
-        <div class="callout-title">Внешним гостям</div>
-        Возьмите с собой <b>паспорт</b> — он нужен для входа в здание вуза. QR-код для прохода придёт на вашу почту.
-      </div>` : '')
-      + (upcoming.length ? `<div class="sched">${upcoming.map(item).join('')}</div>` : '')
-      + (past.length ? `<div class="ticket-list-title" style="margin:22px 0 0;">Прошедшие</div><div class="sched" style="margin-top:10px;border-top-color:var(--hair);">${past.map(item).join('')}</div>` : '');
+      ${anyExt && upcoming.length ? `
+      <div class="notice">
+        <div class="notice-ic">🛂</div>
+        <div>
+          <div class="notice-t">Возьмите паспорт</div>
+          <div class="notice-d">Вы не студент ВШЭ, поэтому на входе в здание нужен документ. QR-код для прохода придёт на вашу почту.</div>
+        </div>
+      </div>` : ''}
+
+      ${upcoming.length ? `
+        <div class="ticket-list-title" style="margin:22px 0 0;">Предстоящие · нажмите, чтобы открыть</div>
+        <div class="sched">${upcoming.map((r, i) => schedItem(r, today, i)).join('')}</div>` : ''}
+
+      ${past.length ? `
+        <div class="ticket-list-title" style="margin:24px 0 0;">Прошедшие</div>
+        <div class="sched">${past.map((r, i) => schedItem(r, today, i)).join('')}</div>` : ''}
+
+      <div class="my-link" onclick="navigate('events', document.getElementById('nav-events'))">Вся афиша клуба →</div>`;
   };
 
   try {
@@ -1875,11 +1889,17 @@ function daysUntil(dateStr) {
   return Math.round((d - today) / (1000 * 60 * 60 * 24));
 }
 
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
 function pluralDays(n) {
   if (n === 0) return 'сегодня';
   if (n === 1) return 'завтра';
-  if (n >= 2 && n <= 4) return `через ${n} дня`;
-  return `через ${n} дней`;
+  return `через ${n} ${plural(n, 'день', 'дня', 'дней')}`;
 }
 
 async function loadProfile() {
@@ -1923,7 +1943,7 @@ async function loadProfile() {
       const d = daysUntil(r.date);
       upcomingWrap.innerHTML = `
         <div class="profile-section-title">Ближайшее мероприятие</div>
-        <div class="upcoming-card" onclick="openEvent(${r.event_id})">
+        <div class="upcoming-card" onclick="openEvent(${r.event_id}, 'profile')">
           <div class="upcoming-countdown">${pluralDays(d)}</div>
           <div class="upcoming-title">${r.title}</div>
           <div class="upcoming-meta-row">
@@ -1968,90 +1988,6 @@ async function loadProfile() {
 }
 
 // ── ADMIN ──
-async function loadAdminStats() {
-  const render = data => {
-    document.getElementById('statsGrid').innerHTML = `
-      <div class="stat-card"><div class="stat-num">${data.total_users}</div><div class="stat-label">Всего пользователей</div></div>
-      <div class="stat-card"><div class="stat-num">${data.upcoming_events}</div><div class="stat-label">Активных событий</div></div>
-      <div class="stat-card"><div class="stat-num">${data.total_registrations}</div><div class="stat-label">Регистраций</div></div>
-      <div class="stat-card"><div class="stat-num">${data.external_guests}</div><div class="stat-label">Внешних гостей</div></div>
-    `;
-  };
-  try {
-    await withCache('/api/admin/stats', render);
-  } catch (e) {
-    if (!readCache('/api/admin/stats')) {
-      document.getElementById('statsGrid').innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label" style="color:var(--danger);">${e.message}</div></div>`;
-    }
-  }
-}
-
-async function showAdminEvents() {
-  showScreen('admin-events');
-  const list = document.getElementById('adminEventsList');
-  list.innerHTML = '<div class="loading-screen"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await apiCall('/api/admin/events');
-    if (!data.events.length) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-title">Мероприятий пока нет</div><div class="empty-sub">Создайте первое через бота</div></div>';
-      return;
-    }
-    list.innerHTML = data.events.map(ev => `
-      <div class="admin-event-card">
-        <div class="admin-event-header">
-          <div>
-            <div class="admin-event-title">${ev.title}</div>
-            <div class="admin-event-meta">${ev.date_display} в ${ev.time} · ${ev.type}</div>
-          </div>
-          <span class="badge ${ev.status === 'past' ? 'badge-done' : 'badge-type'}">${ev.status === 'past' ? 'Прошло' : 'Активно'}</span>
-        </div>
-        <div class="admin-event-stats">
-          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.registered}</div><div class="admin-event-stat-label">Записались</div></div>
-          <div class="admin-event-stat"><div class="admin-event-stat-num">${ev.external_guests}</div><div class="admin-event-stat-label">Внешних</div></div>
-        </div>
-        <div class="admin-event-actions">
-          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, false)">Excel пропуска</button>
-          <button class="admin-event-btn" onclick="exportExcel(${ev.id}, true)">Excel все</button>
-          ${ev.status !== 'past' ? `<button class="admin-event-btn" onclick="broadcastEvent(${ev.id}, '${ev.title.replace(/'/g, '')}')">Рассылка</button>` : ''}
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-title">Ошибка</div><div class="empty-sub">${e.message}</div></div>`;
-  }
-}
-
-async function exportExcel(eventId, allGuests) {
-  try {
-    const url = `${API_URL}/api/admin/events/${eventId}/excel?all_guests=${allGuests}`;
-    const headers = {};
-    if (initData) headers['X-Init-Data'] = initData;
-    else headers['X-Dev-Mode'] = '1';
-    headers['ngrok-skip-browser-warning'] = 'true';
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Ошибка' }));
-      throw new Error(err.detail);
-    }
-    const blob = await res.blob();
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'export.xlsx';
-    link.click();
-    if (window.Telegram?.WebApp?.showAlert) {
-      window.Telegram.WebApp.showAlert('Файл скачан');
-    }
-  } catch (e) { showError(e.message); }
-}
-
-async function broadcastEvent(eventId, title) {
-  if (!confirm(`Разослать анонс «${title}» всем пользователям бота?`)) return;
-  try {
-    const data = await apiCall(`/api/admin/broadcast/${eventId}`, { method: 'POST' });
-    showSuccess('Рассылка завершена', `Доставлено: ${data.sent}\nНе доставлено: ${data.failed}`);
-  } catch (e) { showError(e.message); }
-}
-
 init();
 </script>
 </body>
