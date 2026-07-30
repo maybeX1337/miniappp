@@ -137,6 +137,10 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .detail-address { font-size: 13.5px; color: var(--text-sec); display: flex; align-items: center; gap: 6px; padding: 0 2px; }
 .detail-address svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
 .detail-desc { font-size: 14.5px; line-height: 1.65; padding: 0 2px; }
+.detail-post { display: flex; align-items: center; gap: 9px; padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--ink); text-decoration: none; font-size: 13.5px; font-weight: 650; transition: transform .15s var(--ease), border-color .15s; }
+.detail-post:active { transform: scale(.985); border-color: var(--accent); }
+.detail-post svg { width: 17px; height: 17px; color: var(--accent); flex-shrink: 0; }
+.detail-post-go { margin-left: auto; color: var(--text-muted); }
 
 /* ── Формы ── */
 .form-header { padding: 22px 20px 0; }
@@ -180,7 +184,8 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .my-summary b { color: var(--ink); font-weight: 800; }
 
 .notice { display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 16px; }
-.notice-ic { width: 38px; height: 38px; border-radius: 12px; background: rgba(245,158,11,0.13); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.notice-ic { width: 38px; height: 38px; border-radius: 11px; background: rgba(245,158,11,0.12); display: flex; align-items: center; justify-content: center; color: var(--warn); }
+.notice-ic svg { width: 19px; height: 19px; }
 .notice-t { font-size: 14px; font-weight: 700; letter-spacing: -0.1px; }
 .notice-d { font-size: 12.5px; color: var(--text-sec); line-height: 1.55; margin-top: 3px; }
 
@@ -546,6 +551,11 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
       <span id="detailAddress"></span>
     </div>
     <div class="detail-desc" id="detailDesc"></div>
+    <a class="detail-post" id="detailPost" target="_blank" style="display:none;">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.5 4.5L2.5 11l6 2.2L18 7l-7 7.6V20l3-3.4 3.4 1.6z"/></svg>
+      Пост в канале клуба
+      <span class="detail-post-go">→</span>
+    </a>
     <div id="detailRegisterWrap" style="padding:4px 0 8px;"></div>
   </div>
 </div>
@@ -1723,11 +1733,15 @@ async function openEvent(id, from, goConfirm) {
     }
     document.getElementById('detailDesc').textContent = ev.description || '';
 
+    const postEl = document.getElementById('detailPost');
+    if (ev.post_url) { postEl.href = ev.post_url; postEl.style.display = 'flex'; }
+    else postEl.style.display = 'none';
+
     const regWrap = document.getElementById('detailRegisterWrap');
     const isReg = myRegistrations.has(id);
     const isPast = ev.status === 'past';
     if (isPast) regWrap.innerHTML = `<button class="btn btn-ghost">Мероприятие завершено</button>`;
-    else if (isReg) regWrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">Открыть билет</button>`;
+    else if (isReg) regWrap.innerHTML = `<button class="btn btn-ghost" onclick="navigate('ticket', document.getElementById('nav-ticket'))">Открыть в «Моих событиях»</button>`;
     else regWrap.innerHTML = `<button class="btn btn-primary" onclick="openConfirm()">Зарегистрироваться</button>`;
 
     // Карточку заполнили в любом случае — чтобы «Назад» с подтверждения работал
@@ -1857,7 +1871,13 @@ async function loadTickets() {
 
       ${anyExt && upcoming.length ? `
       <div class="notice">
-        <div class="notice-ic">🛂</div>
+        <div class="notice-ic">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <rect x="5" y="2.5" width="14" height="19" rx="2.5"/>
+            <circle cx="12" cy="10" r="2.7"/>
+            <path stroke-linecap="round" d="M9 16.8h6"/>
+          </svg>
+        </div>
         <div>
           <div class="notice-t">Возьмите паспорт</div>
           <div class="notice-d">Вы не студент ВШЭ, поэтому на входе в здание нужен документ. QR-код для прохода придёт на вашу почту.</div>
