@@ -1276,7 +1276,6 @@ const CS_DEFAULT = {
   season: "Winter'26",
   weeks: 5,
   deadline: '19 января',
-  formUrl: 'https://forms.yandex.ru/cloud/69540294eb6146d8a84f0b2e/',
   wants: [
     'Хочу побеждать в престижных кейс-чемпионатах',
     'Хочу найти единомышленников',
@@ -1554,7 +1553,7 @@ function renderCs() {
         <div class="cs-hero-title">${CS.hero_title}</div>
         <div class="cs-hero-sub">${CS.hero_sub}</div>
         <div class="cs-hero-row">
-          <a class="cs-hero-btn" href="${CS.formUrl}" target="_blank">Зарегистрироваться</a>
+          <button class="cs-hero-btn" onclick="csApply()">${csData.joined ? 'Вы в отборе — к этапам' : 'Подать заявку'}</button>
           <div class="cs-deadline">до ${CS.deadline}</div>
         </div>
       </div>
@@ -1645,7 +1644,7 @@ function renderCs() {
       <div class="cs-cta">
         <div class="cs-cta-t">${CS.cta_title} · ${CS.season}</div>
         <div class="cs-cta-d">Дедлайн регистрации — ${CS.deadline}. ${CS.cta_text}</div>
-        <a class="cs-cta-btn" href="${CS.formUrl}" target="_blank">Подать заявку</a>
+        <button class="cs-cta-btn" onclick="csApply()">${csData.joined ? 'Перейти к этапам отбора' : 'Подать заявку'}</button>
       </div>
 
     </div>`;
@@ -1657,10 +1656,9 @@ function renderCs() {
   document.getElementById('csSelectionPane').innerHTML = `
     ${joined
       ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(11,166,120,0.35);background:rgba(11,166,120,0.07);"><div class="callout-title">Вы участвуете в отборе</div>Ссылки на этапы открываются, когда этап начинается. Результаты придут в бота.</div>'
-      : `<div class="cs-lead" style="margin-bottom:18px;">Регистрация на ${CS.season} идёт до ${CS.deadline} — по форме на сайте. Здесь отмечайте участие, чтобы видеть этапы и свои результаты.</div>
-         <a class="btn btn-primary" style="margin-bottom:10px;" href="${CS.formUrl}" target="_blank">Заполнить форму регистрации</a>`}
-    <div class="stage-list">${stages.map((s, i) => csStageCard(s, i, true)).join('')}</div>
-    ${joined ? '' : '<button class="btn btn-ghost" style="margin-top:18px;" onclick="csJoin()">Я зарегистрировался — следить за этапами</button>'}`;
+      : `<div class="cs-lead" style="margin-bottom:16px;">Заявка подаётся прямо здесь — данные возьмём из вашего профиля, ничего заполнять заново не нужно. Приём заявок до ${CS.deadline}.</div>
+         <button class="btn btn-primary" style="margin-bottom:18px;" onclick="csApply()">Подать заявку на отбор</button>`}
+    <div class="stage-list">${stages.map((s, i) => csStageCard(s, i, true)).join('')}</div>`;
 }
 
 // ── Интерактив страницы Case Study ──
@@ -1723,18 +1721,29 @@ function csAnimateStats() {
   });
 }
 
-async function csJoin() {
+async function csApply() {
+  // Уже подали — просто показываем этапы
+  if (csData && csData.joined) { switchCsTab('selection'); return; }
+
+  if (!myProfile || !myProfile.onboarded) {
+    showHint('Сначала заполните профиль во вкладке «Профиль» — данные для заявки берутся оттуда.');
+    return;
+  }
   try {
     const res = await apiCall('/api/cs/join', { method: 'POST' });
     dropCache('/api/cs');
     csData.joined = true;
     renderCs();
+    switchCsTab('selection');
     showSuccess(
-      res.already_joined ? 'Вы уже в отборе' : 'Вы участвуете в отборе!',
-      'Следите за этапами во вкладке «Отбор» — уведомления о результатах придут в бота.'
+      res.already_joined ? 'Вы уже в отборе' : 'Заявка принята!',
+      'Этапы отбора появятся ниже. Как только этап откроется, здесь будет кнопка «Пройти этап», а результаты придут в бота.'
     );
   } catch (e) { showError(e.message); }
 }
+
+// старое имя — на случай кнопок в закэшированной версии
+const csJoin = csApply;
 
 // ── EVENTS ──
 // Фирменные градиенты HSCC: электрик-синий, чернильный, магента из логотипа
