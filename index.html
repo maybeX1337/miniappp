@@ -446,6 +446,11 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
       <div class="form-error" id="onbCourseError"></div>
     </div>
     <div class="form-group">
+      <label class="form-label">Программа обучения</label>
+      <input class="form-input" id="onbProgram" placeholder="Например: Реклама и связи с общественностью" type="text">
+      <div class="form-error" id="onbProgramError"></div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Телефон</label>
       <input class="form-input" id="onbPhone" placeholder="+7 900 000-00-00" type="tel" autocomplete="tel">
       <div class="form-error" id="onbPhoneError"></div>
@@ -687,6 +692,11 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
       <div class="form-error" id="editCourseError"></div>
     </div>
     <div class="form-group">
+      <label class="form-label">Программа обучения</label>
+      <input class="form-input" id="editProgram" placeholder="Например: Реклама и связи с общественностью" type="text">
+      <div class="form-error" id="editProgramError"></div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Телефон</label>
       <input class="form-input" id="editPhone" placeholder="+7 900 000-00-00" type="tel">
       <div class="form-error" id="editPhoneError"></div>
@@ -886,7 +896,7 @@ function setFieldError(fieldId, errorId, message) {
   }
 }
 function clearFormErrors(prefix) {
-  ['Name', 'Uni', 'UniOther', 'Course', 'Email', 'Phone', 'Citizen',
+  ['Name', 'Uni', 'UniOther', 'Course', 'Email', 'Phone', 'Citizen', 'Program',
    'LastLat', 'FirstLat', 'MiddleLat', 'EmailCode'].forEach(f => {
     setFieldError(prefix + f, prefix + f + 'Error', null);
   });
@@ -1104,6 +1114,7 @@ async function submitProfile(prefix, btnId, isFirstTime) {
   const course = document.getElementById(prefix + 'Course').value;
   const email = document.getElementById(prefix + 'Email').value.trim();
   const phone = document.getElementById(prefix + 'Phone').value.trim();
+  const program = document.getElementById(prefix + 'Program').value.trim();
   const citizen = document.getElementById(prefix + 'Citizen').value;
   const isForeign = citizen === 'foreign';
   const lastLat = document.getElementById(prefix + 'LastLat').value.trim();
@@ -1125,6 +1136,7 @@ async function submitProfile(prefix, btnId, isFirstTime) {
   } else if (!/^[+0-9()\-\s]{7,20}$/.test(phone)) {
     setFieldError(prefix + 'Phone', prefix + 'PhoneError', 'Некорректный номер телефона'); hasErrors = true;
   }
+  if (!program) { setFieldError(prefix + 'Program', prefix + 'ProgramError', 'Укажите программу обучения'); hasErrors = true; }
   if (!citizen) { setFieldError(prefix + 'Citizen', prefix + 'CitizenError', 'Укажите гражданство'); hasErrors = true; }
   if (isForeign) {
     const latRe = /^[A-Za-z\-\s]+$/;
@@ -1152,6 +1164,7 @@ async function submitProfile(prefix, btnId, isFirstTime) {
         university_other: uniOther,
         course, email,
         phone,
+        program,
         is_foreign: isForeign,
         last_name_lat: isForeign ? lastLat : '',
         first_name_lat: isForeign ? firstLat : '',
@@ -1189,6 +1202,7 @@ function openEditProfile() {
   document.getElementById('editCourse').value = myProfile.course || '';
   document.getElementById('editEmail').value = myProfile.email || '';
   document.getElementById('editPhone').value = myProfile.phone || '';
+  document.getElementById('editProgram').value = myProfile.program || '';
   document.getElementById('editCitizen').value = myProfile.is_foreign ? 'foreign' : (myProfile.onboarded ? 'rf' : '');
   document.getElementById('editLastLat').value = myProfile.last_name_lat || '';
   document.getElementById('editFirstLat').value = myProfile.first_name_lat || '';
@@ -1995,6 +2009,7 @@ async function loadProfile() {
       + cell('Вуз', uni)
       + cell('Курс', u.course, { mono: true })
       + cell('Email', u.email, { wide: true })
+      + cell('Программа', u.program, { wide: true })
       + cell('Телефон', u.phone, { mono: true })
       + cell('Гражданство', u.is_foreign ? 'Иностранное' : 'РФ')
       + (u.is_foreign ? cell('ФИО латиницей', latName, { wide: true }) : '');
