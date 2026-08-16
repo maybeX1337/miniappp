@@ -788,7 +788,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 </div>
 
 <!-- ── ТЕСТ ЭТАПА ── -->
-<div id="screen-test" class="screen no-nav">
+<div id="screen-test" class="screen">
   <div class="test-bar">
     <div class="test-back" onclick="exitTest()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
@@ -1435,7 +1435,7 @@ function renderTest(showMissing) {
         </div>
       </div>`;
     }).join('')}
-    <div class="test-note">Ответьте на все вопросы части, чтобы двигаться дальше. Отправить можно один раз.</div>
+    <div class="test-note">Если ответа на вопрос нет — можно пропустить, он просто не принесёт баллов. Отправить ответы можно один раз.</div>
     <div class="test-nav">
       ${testBlockIdx > 0 ? '<button class="btn btn-ghost" onclick="testPrev()">Назад</button>' : ''}
       ${isLast
@@ -1480,7 +1480,6 @@ function blockUnanswered() {
 }
 
 function testNext() {
-  if (blockUnanswered()) { renderTest(true); showHint('Ответьте на все вопросы этой части.'); return; }
   testBlockIdx++;
   renderTest();
 }
@@ -1516,7 +1515,6 @@ function exitTest() {
 }
 
 async function submitTest(auto) {
-  if (!auto && blockUnanswered()) { renderTest(true); showHint('Ответьте на все вопросы этой части.'); return; }
   const btn = document.getElementById('testSubmitBtn');
   if (btn) { btn.innerHTML = '<div class="spinner"></div>'; btn.disabled = true; }
   try {
