@@ -1422,13 +1422,13 @@ function renderTest(showMissing) {
       const missing = showMissing && chosen === undefined;
       return `
       <div class="test-q" style="animation-delay:${Math.min(i * 40, 240)}ms">
-        <div class="test-q-num${missing ? ' unanswered' : ''}">Вопрос ${q.number || (i + 1)}${missing ? ' · нет ответа' : ''}</div>
+        <div class="test-q-num${missing ? ' unanswered' : ''}">Вопрос ${q.number || (i + 1)}<span class="q-missing">${missing ? ' · нет ответа' : ''}</span></div>
         <div class="test-q-title">${q.title}</div>
         ${q.body ? `<div class="test-q-body">${q.body}</div>` : ''}
         ${q.image_url ? `<img class="test-q-img" data-cs-src="${q.image_url}" alt="">` : ''}
         <div class="test-opts">
           ${(q.options || []).map((opt, oi) => `
-            <div class="test-opt${chosen === oi ? ' on' : ''}" onclick="pickAnswer(${q.id}, ${oi})">
+            <div class="test-opt${chosen === oi ? ' on' : ''}" onclick="pickAnswer(${q.id}, ${oi}, this)">
               <div class="test-radio"></div>
               <div>${opt}</div>
             </div>`).join('')}
@@ -1451,9 +1451,28 @@ function renderTest(showMissing) {
   document.getElementById('screen-test').scrollTop = 0;
 }
 
-function pickAnswer(qid, optIdx) {
+function pickAnswer(qid, optIdx, el) {
   testAnswers[qid] = optIdx;
-  renderTest();
+
+  // Меняем подсветку на месте: перерисовка сбрасывала прокрутку в начало
+  const q = el.closest('.test-q');
+  q.querySelectorAll('.test-opt').forEach((o, i) => o.classList.toggle('on', i === optIdx));
+  const num = q.querySelector('.test-q-num');
+  if (num) {
+    num.classList.remove('unanswered');
+    const miss = num.querySelector('.q-missing');
+    if (miss) miss.textContent = '';
+  }
+  updateTestProgress();
+}
+
+function updateTestProgress() {
+  const total = (testData.questions || []).length;
+  const answered = Object.keys(testAnswers).length;
+  const bar = document.getElementById('testProgress');
+  if (bar) bar.style.width = total ? `${answered / total * 100}%` : '0%';
+  const sub = document.querySelector('.test-block-sub');
+  if (sub) sub.textContent = `Часть ${testBlockIdx + 1} из ${testBlocks().length} · отвечено ${answered} из ${total}`;
 }
 
 function blockUnanswered() {
