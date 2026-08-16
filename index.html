@@ -332,6 +332,20 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .stage-open-btn { display: block; width: 100%; margin-top: 12px; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 11px; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(46,69,255,0.28); transition: transform .15s var(--ease); }
 .stage-open-btn:active { transform: scale(.97); }
 
+/* ── Сдача видео ссылкой ── */
+.vid-wrap { padding: 4px 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.vid-title { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.15; }
+.vid-desc { font-size: 14.5px; line-height: 1.65; color: var(--text-sec); white-space: pre-line; }
+.vid-steps { display: flex; flex-direction: column; }
+.vid-step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; line-height: 1.5; }
+.vid-step:last-child { border-bottom: none; }
+.vid-step-n { font-family: 'Unbounded', sans-serif; font-weight: 900; color: var(--accent); font-size: 14px; }
+.vid-warn { padding: 14px 16px; border-radius: var(--radius-sm); background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.25); border-left: 3px solid var(--warn); font-size: 13px; line-height: 1.6; }
+.vid-done { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 30px 0; text-align: center; }
+.vid-done-ic { width: 60px; height: 60px; border-radius: 19px; background: rgba(11,166,120,0.1); display: flex; align-items: center; justify-content: center; }
+.vid-done-ic svg { width: 28px; height: 28px; color: var(--success); }
+.vid-link { font-size: 13px; color: var(--accent); word-break: break-all; }
+
 /* ── Профиль: клубный бейдж + сетка данных ── */
 .profile-wrap { padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
 .pf-badge { position: relative; overflow: hidden; background: var(--grad-brand); border-radius: var(--radius); padding: 20px; color: #fff; box-shadow: 0 12px 30px rgba(46,69,255,0.28); }
@@ -798,6 +812,15 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
   <div class="test-progress"><div class="test-progress-fill" id="testProgress"></div></div>
   <div id="testBody"></div>
+</div>
+
+<!-- ── СДАЧА ВИДЕО ССЫЛКОЙ ── -->
+<div id="screen-video" class="screen">
+  <div class="detail-back" onclick="exitVideo()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+    Назад
+  </div>
+  <div id="videoBody"></div>
 </div>
 
 <!-- ── BOTTOM NAV (build via JS) ── -->
@@ -1340,9 +1363,11 @@ function csStageCard(s, i, withProgress) {
     if (s.submitted && !res) {
       action = '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
     } else if (current) {
-      action = s.has_test
-        ? `<button class="stage-open-btn" onclick="openTest(${s.id})">Пройти этап</button>`
-        : (s.link ? `<a class="stage-link" href="${s.link}" target="_blank">Перейти к этапу</a>` : '');
+      action = s.kind === 'video'
+        ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">Отправить видео</button>`
+        : s.has_test
+          ? `<button class="stage-open-btn" onclick="openTest(${s.id})">Пройти этап</button>`
+          : (s.link ? `<a class="stage-link" href="${s.link}" target="_blank">Перейти к этапу</a>` : '');
     } else if (locked && !res) {
       action = `<div class="stage-lock">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
@@ -1367,6 +1392,96 @@ function csStageCard(s, i, withProgress) {
         ${action}
       </div>
     </div>`;
+}
+
+// ── СДАЧА ВИДЕО ССЫЛКОЙ ──
+let videoStage = null;
+
+function openVideoStage(stageId) {
+  videoStage = (csData.stages || []).find(s => s.id === stageId);
+  if (!videoStage) return;
+  renderVideoStage();
+  showScreen('video');
+  document.getElementById('screen-video').scrollTop = 0;
+}
+
+function renderVideoStage() {
+  const s = videoStage;
+  const dates = (s.date_start_display || s.date_end_display)
+    ? `${s.date_start_display || '…'} — ${s.date_end_display || '…'}` : '';
+
+  document.getElementById('videoBody').innerHTML = s.submitted ? `
+    <div class="vid-wrap">
+      <div class="vid-done">
+        <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="empty-title">Видео принято</div>
+        <div class="empty-sub">Результаты объявят организаторы — сообщение придёт в бота.</div>
+        ${s.my_link ? `<div class="vid-link">${s.my_link}</div>` : ''}
+      </div>
+    </div>` : `
+    <div class="vid-wrap">
+      <div>
+        <div class="eyebrow">Этап отбора${dates ? ' · ' + dates : ''}</div>
+        <div class="vid-title" style="margin-top:7px;">${s.name}</div>
+      </div>
+      ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
+
+      <div>
+        <div class="profile-section-title">Как сдать</div>
+        <div class="vid-steps">
+          <div class="vid-step"><div class="vid-step-n">1</div><div>Запишите видео и загрузите его на Google Диск, Яндекс Диск, YouTube или во ВКонтакте.</div></div>
+          <div class="vid-step"><div class="vid-step-n">2</div><div><b>Откройте доступ по ссылке</b> — иначе мы не сможем посмотреть работу.</div></div>
+          <div class="vid-step"><div class="vid-step-n">3</div><div>Вставьте ссылку в поле ниже и нажмите «Отправить».</div></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ссылка на видео</label>
+        <input class="form-input" id="videoLink" type="url" inputmode="url" placeholder="https://disk.yandex.ru/i/...">
+        <div class="form-error" id="videoLinkError"></div>
+      </div>
+
+      <div class="vid-warn">
+        Отправить можно <b>один раз</b> — заменить ссылку потом не получится.
+        Проверьте, что видео открывается по ссылке в режиме инкогнито.
+      </div>
+
+      <button class="btn btn-primary" id="videoSubmitBtn" onclick="submitVideoLink()">Отправить</button>
+    </div>`;
+}
+
+function exitVideo() {
+  showScreen('members');
+  setNav(document.getElementById('nav-members'));
+}
+
+async function submitVideoLink() {
+  const input = document.getElementById('videoLink');
+  const link = input.value.trim();
+  if (!/^https?:\/\/.+\..+/.test(link)) {
+    setFieldError('videoLink', 'videoLinkError', 'Вставьте ссылку целиком — начиная с https://');
+    return;
+  }
+  setFieldError('videoLink', 'videoLinkError', null);
+
+  const btn = document.getElementById('videoSubmitBtn');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+  try {
+    await apiCall(`/api/cs/stage/${videoStage.id}/submit_link`, {
+      method: 'POST', body: JSON.stringify({ link })
+    });
+    dropCache('/api/cs');
+    videoStage.submitted = true;
+    videoStage.my_link = link;
+    renderVideoStage();
+    loadCaseStudy();
+    showSuccess('Видео отправлено!', 'Организаторы посмотрят работу и сообщат результат в бота.');
+  } catch (e) {
+    btn.textContent = 'Отправить';
+    btn.disabled = false;
+    showError(e.message);
+  }
 }
 
 // ── ПРОХОЖДЕНИЕ ЭТАПА ──
