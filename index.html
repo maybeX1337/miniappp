@@ -346,6 +346,16 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .vid-done-ic svg { width: 28px; height: 28px; color: var(--success); }
 .vid-link { font-size: 13px; color: var(--accent); word-break: break-all; }
 
+/* ── Запись на интервью ── */
+.slot { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 15px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; transition: border-color .18s var(--ease), transform .12s var(--ease); }
+.slot:active { transform: scale(.99); }
+.slot.busy { opacity: .45; cursor: default; }
+.slot-when { font-size: 15.5px; font-weight: 700; letter-spacing: -0.2px; font-variant-numeric: tabular-nums; }
+.slot-note { font-size: 12.5px; color: var(--text-sec); margin-top: 3px; }
+.slot-free { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+.slot.busy .slot-free { color: var(--text-muted); }
+.slots-list { display: flex; flex-direction: column; gap: 8px; }
+
 /* ── Профиль: клубный бейдж + сетка данных ── */
 .profile-wrap { padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
 .pf-badge { position: relative; overflow: hidden; background: var(--grad-brand); border-radius: var(--radius); padding: 20px; color: #fff; box-shadow: 0 12px 30px rgba(46,69,255,0.28); }
@@ -1361,9 +1371,13 @@ function csStageCard(s, i, withProgress) {
   let action = '';
   if (withProgress) {
     if (s.submitted && !res) {
-      action = '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
+      action = s.kind === 'interview' && s.my_slot
+        ? `<div class="stage-lock">🗓 Вы записаны: ${fmtSlot(s.my_slot)}</div>`
+        : '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
     } else if (current) {
-      action = s.kind === 'video'
+      action = s.kind === 'interview'
+        ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">Выбрать время</button>`
+        : s.kind === 'video'
         ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">Отправить видео</button>`
         : s.has_test
           ? `<button class="stage-open-btn" onclick="openTest(${s.id})">Пройти этап</button>`
@@ -1392,6 +1406,79 @@ function csStageCard(s, i, withProgress) {
         ${action}
       </div>
     </div>`;
+}
+
+// ── ЗАПИСЬ НА ИНТЕРВЬЮ ──
+let slotStage = null;
+
+function fmtSlot(iso) {
+  const [d, t] = (iso || '').split(' ');
+  const [y, m, day] = (d || '').split('-');
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return `${parseInt(day, 10)} ${months[parseInt(m, 10) - 1] || ''}, ${t || ''}`;
+}
+
+function openSlotStage(stageId) {
+  slotStage = (csData.stages || []).find(s => s.id === stageId);
+  if (!slotStage) return;
+  renderSlotStage();
+  showScreen('video');
+  document.getElementById('screen-video').scrollTop = 0;
+}
+
+function renderSlotStage() {
+  const s = slotStage;
+  const slots = s.slots || [];
+
+  document.getElementById('videoBody').innerHTML = s.submitted ? `
+    <div class="vid-wrap">
+      <div class="vid-done">
+        <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="empty-title">Вы записаны</div>
+        <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
+        <div class="empty-sub">С вами свяжутся в Telegram перед началом.</div>
+      </div>
+    </div>` : `
+    <div class="vid-wrap">
+      <div>
+        <div class="eyebrow">Этап отбора</div>
+        <div class="vid-title" style="margin-top:7px;">${s.name}</div>
+      </div>
+      ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
+
+      <div>
+        <div class="profile-section-title">Выберите удобное время</div>
+        ${slots.length ? `<div class="slots-list">
+          ${slots.map(sl => `
+            <div class="slot${sl.free > 0 ? '' : ' busy'}" ${sl.free > 0 ? `onclick="bookSlot(${sl.id})"` : ''}>
+              <div>
+                <div class="slot-when">${fmtSlot(sl.slot_at)}</div>
+                ${sl.note ? `<div class="slot-note">${sl.note}</div>` : ''}
+              </div>
+              <div class="slot-free">${sl.free > 0 ? 'Свободно' : 'Занято'}</div>
+            </div>`).join('')}
+        </div>` : '<div class="vid-desc">Время пока не назначено — загляните позже, мы добавим слоты.</div>'}
+      </div>
+
+      <div class="vid-warn">
+        Выбрать можно <b>один раз</b>. Если время не подойдёт — напишите организаторам.
+      </div>
+    </div>`;
+}
+
+async function bookSlot(slotId) {
+  try {
+    await apiCall(`/api/cs/stage/${slotStage.id}/book`, {
+      method: 'POST', body: JSON.stringify({ slot_id: slotId })
+    });
+    dropCache('/api/cs');
+    const chosen = (slotStage.slots || []).find(x => x.id === slotId);
+    slotStage.submitted = true;
+    slotStage.my_slot = chosen ? chosen.slot_at : '';
+    renderSlotStage();
+    loadCaseStudy();
+    showSuccess('Вы записаны!', `Интервью ${fmtSlot(slotStage.my_slot)}. С вами свяжутся в Telegram.`);
+  } catch (e) { showError(e.message); }
 }
 
 // ── СДАЧА ВИДЕО ССЫЛКОЙ ──
