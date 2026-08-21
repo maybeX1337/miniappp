@@ -1501,11 +1501,12 @@ async function bookSlot(slotId) {
     });
     dropCache('/api/cs');
     const chosen = (slotStage.slots || []).find(x => x.id === slotId);
-    slotStage.submitted = true;
-    slotStage.my_slot = chosen ? chosen.slot_at : '';
-    renderSlotStage();
+    const when = chosen ? chosen.slot_at : '';
+    // Возвращаем к списку этапов: памятку человек откроет сам, когда захочет,
+    // и увидит её уже с актуальной кнопкой отмены
+    exitVideo();
     loadCaseStudy();
-    showSuccess('Вы записаны!', `Интервью ${fmtSlot(slotStage.my_slot)}. С вами свяжутся в Telegram.`);
+    showSuccess('Вы записаны!', `Интервью ${fmtSlot(when)}. С вами свяжутся в Telegram.`);
   } catch (e) { showError(e.message); }
 }
 
