@@ -75,6 +75,8 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .btn-primary { background: var(--accent); color: white; box-shadow: 0 8px 24px rgba(46,69,255,0.32); }
 .btn-primary:active { box-shadow: 0 3px 10px rgba(46,69,255,0.24); }
 .btn-ghost { background: var(--accent-dim); color: var(--accent); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--danger); }
+.btn-danger:active { background: rgba(239,68,68,0.16); }
 .btn-outline { background: transparent; border: 1.5px solid var(--ink); color: var(--ink); }
 .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
 
@@ -1371,12 +1373,21 @@ function csStageCard(s, i, withProgress) {
   let action = '';
   if (withProgress) {
     if (s.submitted && !res) {
-      action = s.kind === 'interview' && s.my_slot
-        ? `<div class="stage-lock">🗓 Вы записаны: ${fmtSlot(s.my_slot)}</div>`
-        : '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
+      if (s.kind === 'interview' && s.my_slot) {
+        // Записался — но экран этапа остаётся открытым: там памятка и отмена
+        action = `<div class="stage-lock">🗓 Вы записаны: ${fmtSlot(s.my_slot)}</div>`
+          + (s.can_view
+            ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">${
+                s.can_cancel ? 'Памятка и отмена записи' : 'Открыть памятку'}</button>`
+            : '');
+      } else {
+        action = '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
+      }
     } else if (current) {
       action = s.kind === 'interview'
         ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">Выбрать время</button>`
+        : s.kind === 'form'
+        ? `<button class="stage-open-btn" onclick="openFormStage(${s.id})">Открыть этап</button>`
         : s.kind === 'video'
         ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">Отправить видео</button>`
         : s.has_test
@@ -1438,6 +1449,23 @@ function renderSlotStage() {
         <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
         <div class="empty-sub">С вами свяжутся в Telegram перед началом.</div>
       </div>
+
+      ${s.description ? `
+        <div>
+          <div class="profile-section-title">Как подготовиться</div>
+          <div class="vid-desc">${s.description}</div>
+        </div>` : ''}
+
+      ${s.can_cancel ? `
+        <div class="vid-warn">
+          Не сможете прийти в это время? Освободите слот — его займёт кто-то другой,
+          а вы выберете другое время, пока они есть.
+        </div>
+        <button class="btn btn-danger" onclick="cancelBooking()">Отменить запись</button>
+      ` : `
+        <div class="vid-warn">
+          Отменить запись уже нельзя — организаторы подвели итоги этапа.
+        </div>`}
     </div>` : `
     <div class="vid-wrap">
       <div>
@@ -1479,6 +1507,81 @@ async function bookSlot(slotId) {
     loadCaseStudy();
     showSuccess('Вы записаны!', `Интервью ${fmtSlot(slotStage.my_slot)}. С вами свяжутся в Telegram.`);
   } catch (e) { showError(e.message); }
+}
+
+async function cancelBooking() {
+  const when = fmtSlot(slotStage.my_slot);
+  const ok = await askConfirm(
+    `Отменить запись на ${when}?\n\nСлот освободится, и его смогут занять другие. ` +
+    `Записаться заново можно будет только на свободное время.`
+  );
+  if (!ok) return;
+
+  try {
+    await apiCall(`/api/cs/stage/${slotStage.id}/cancel_booking`, { method: 'POST' });
+    dropCache('/api/cs');
+    slotStage.submitted = false;
+    slotStage.my_slot = '';
+    slotStage.can_view = false;
+    slotStage.can_cancel = false;
+    await loadCaseStudy();
+    // Берём этап заново — список слотов после отмены изменился
+    const updated = (csData.stages || []).find(x => x.id === slotStage.id);
+    if (updated) slotStage = updated;
+    renderSlotStage();
+    showSuccess('Запись отменена', 'Слот снова свободен. Выберите другое время, когда будете готовы.');
+  } catch (e) { showError(e.message); }
+}
+
+// Родное окно Telegram, если оно есть, иначе обычное подтверждение браузера
+function askConfirm(text) {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg && tg.showConfirm) {
+    return new Promise(resolve => tg.showConfirm(text, resolve));
+  }
+  return Promise.resolve(window.confirm(text));
+}
+
+// ── ЭТАП СО ССЫЛКОЙ НА ВНЕШНЮЮ ФОРМУ ──
+let formStage = null;
+
+function openFormStage(stageId) {
+  formStage = (csData.stages || []).find(s => s.id === stageId);
+  if (!formStage) return;
+  renderFormStage();
+  showScreen('video');
+  document.getElementById('screen-video').scrollTop = 0;
+}
+
+function renderFormStage() {
+  const s = formStage;
+  const dates = (s.date_start_display || s.date_end_display)
+    ? `${s.date_start_display || '…'} — ${s.date_end_display || '…'}` : '';
+
+  document.getElementById('videoBody').innerHTML = `
+    <div class="vid-wrap">
+      <div>
+        <div class="eyebrow">Этап отбора</div>
+        <div class="vid-title" style="margin-top:7px;">${s.name}</div>
+        ${dates ? `<div class="stage-dates" style="margin-top:8px;display:inline-block;">${dates}</div>` : ''}
+      </div>
+      ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
+      ${s.link ? `
+        <button class="btn btn-primary" onclick="openStageLink()">Перейти к форме</button>
+        <div class="vid-warn">
+          Форма откроется в браузере. Заполните её до конца — статус этапа
+          организаторы поставят по ответам из неё.
+        </div>` : `
+        <div class="vid-warn">Ссылка пока не опубликована — загляните чуть позже.</div>`}
+    </div>`;
+}
+
+function openStageLink() {
+  const url = formStage && formStage.link;
+  if (!url) return;
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg && tg.openLink) tg.openLink(url);
+  else window.open(url, '_blank');
 }
 
 // ── СДАЧА ВИДЕО ССЫЛКОЙ ──
