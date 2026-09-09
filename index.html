@@ -290,7 +290,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .stage-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.3; }
 .stage-status { display: flex; gap: 8px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
 .stage-dates { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.stage-desc { font-size: 13px; color: var(--text-sec); line-height: 1.55; margin-top: 8px; }
+.stage-desc { font-size: 13px; color: var(--text-sec); line-height: 1.55; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .stage-link { display: inline-block; margin-top: 12px; padding: 11px 18px; background: var(--accent); color: #fff; border-radius: 11px; font-size: 13px; font-weight: 700; text-decoration: none; box-shadow: 0 5px 14px rgba(46,69,255,0.28); }
 .cs-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .cs-photo-stub { aspect-ratio: 4/3; background: var(--accent-dim); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--accent); }
@@ -1352,6 +1352,12 @@ function switchCsTab(tab) {
   document.getElementById('csSelectionPane').style.display = tab === 'selection' ? '' : 'none';
 }
 
+// В списке этапов показываем только первый абзац описания: полный текст
+// человек прочитает внутри этапа, а карточка не должна растягиваться
+function shortDesc(text) {
+  return (text || '').split(/\n\s*\n/)[0].trim();
+}
+
 function csStageBadge(s) {
   if (s.status === 'active') return '<span class="badge badge-active">Идёт сейчас</span>';
   if (s.status === 'finished') return '<span class="badge badge-done">Завершён</span>';
@@ -1416,7 +1422,7 @@ function csStageCard(s, i, withProgress) {
           ${csStageBadge(s)}
           ${resLabel}
         </div>
-        ${s.description ? `<div class="stage-desc">${s.description}</div>` : ''}
+        ${s.description ? `<div class="stage-desc">${shortDesc(s.description)}</div>` : ''}
         ${action}
       </div>
     </div>`;
@@ -1578,10 +1584,7 @@ function renderFormStage() {
           </button>
           <div class="go-form-host">${linkHost(s.link)}</div>
         </div>
-        <div class="vid-warn">
-          Данные из профиля подставятся в форму сами — останется вставить
-          ссылку на видео. Заполните форму до конца, иначе ответ не засчитается.
-        </div>` : `
+        ${s.note ? `<div class="vid-warn">${s.note}</div>` : ''}` : `
         <div class="vid-warn">Ссылка пока не опубликована — загляните чуть позже.</div>`}
     </div>`;
 }
