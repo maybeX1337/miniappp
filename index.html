@@ -76,6 +76,9 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .btn-primary:active { box-shadow: 0 3px 10px rgba(46,69,255,0.24); }
 .btn-ghost { background: var(--accent-dim); color: var(--accent); }
 .btn-danger { background: rgba(239,68,68,0.1); color: var(--danger); }
+.go-form { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.go-form svg { width: 16px; height: 16px; opacity: .85; }
+.go-form-host { margin-top: 9px; text-align: center; font-size: 11.5px; font-weight: 600; letter-spacing: .3px; color: var(--text-muted); }
 .btn-danger:active { background: rgba(239,68,68,0.16); }
 .btn-outline { background: transparent; border: 1.5px solid var(--ink); color: var(--ink); }
 .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
@@ -1568,13 +1571,26 @@ function renderFormStage() {
       </div>
       ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
       ${s.link ? `
-        <button class="btn btn-primary" onclick="openStageLink()">Перейти к форме</button>
+        <div>
+          <button class="btn btn-primary go-form" onclick="openStageLink()">
+            Открыть форму
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5M19 5l-8 8M17 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h4"/></svg>
+          </button>
+          <div class="go-form-host">${linkHost(s.link)}</div>
+        </div>
         <div class="vid-warn">
-          Форма откроется в браузере. Заполните её до конца — статус этапа
-          организаторы поставят по ответам из неё.
+          Данные из профиля подставятся в форму сами — останется вставить
+          ссылку на видео. Заполните форму до конца, иначе ответ не засчитается.
         </div>` : `
         <div class="vid-warn">Ссылка пока не опубликована — загляните чуть позже.</div>`}
     </div>`;
+}
+
+// Показываем участнику только адрес сайта: длинная ссылка с параметрами
+// в интерфейсе выглядит мусором, а знать, куда ведёт кнопка, полезно
+function linkHost(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); }
+  catch (e) { return ''; }
 }
 
 function openStageLink() {
