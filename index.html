@@ -2074,8 +2074,9 @@ async function csApply() {
   try {
     const res = await apiCall('/api/cs/join', { method: 'POST' });
     dropCache('/api/cs');
-    csData.joined = true;
-    renderCs();
+    // Этапы берём заново с сервера: до заявки он посчитал их все закрытыми,
+    // и если поменять только флаг «в отборе», замки останутся старые
+    await loadCaseStudy();
     switchCsTab('selection');
     showSuccess(
       res.already_joined ? 'Вы уже в отборе' : 'Заявка принята!',
