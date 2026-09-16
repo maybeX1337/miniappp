@@ -1521,6 +1521,7 @@ function csStageCard(s, i, withProgress) {
 
 // ── ЗАПИСЬ НА ИНТЕРВЬЮ ──
 let slotStage = null;
+let stageScreen = null;   // какой этап сейчас открыт на экране этапа: 'slot' | 'form' | 'video'
 
 function fmtSlot(iso) {
   const [d, t] = (iso || '').split(' ');
@@ -1533,6 +1534,7 @@ let ivDay = null;            // выбранный день в выборе вр
 let ivRescheduling = false;  // человек выбирает новое время вместо текущего
 
 function openSlotStage(stageId) {
+  stageScreen = 'slot';
   slotStage = (csData.stages || []).find(s => s.id === stageId);
   if (!slotStage) return;
   ivDay = null;
@@ -1832,6 +1834,7 @@ function askConfirm(text) {
 let formStage = null;
 
 function openFormStage(stageId) {
+  stageScreen = 'form';
   formStage = (csData.stages || []).find(s => s.id === stageId);
   if (!formStage) return;
   renderFormStage();
@@ -1885,6 +1888,7 @@ function openStageLink() {
 let videoStage = null;
 
 function openVideoStage(stageId) {
+  stageScreen = 'video';
   videoStage = (csData.stages || []).find(s => s.id === stageId);
   if (!videoStage) return;
   renderVideoStage();
@@ -2187,11 +2191,25 @@ function fillDeadline(page) {
   return walk(page);
 }
 
+// Экран этапа мог открыться по сохранённой на телефоне копии данных.
+// Пришли свежие с сервера — перерисовываем его, иначе новое (инструкция, слоты) не видно
+function refreshOpenStage() {
+  const screen = document.getElementById('screen-video');
+  if (!stageScreen || !screen || !screen.classList.contains('active')) return;
+  const cur = { slot: slotStage, form: formStage, video: videoStage }[stageScreen];
+  const fresh = cur && (csData.stages || []).find(s => s.id === cur.id);
+  if (!fresh) return;
+  if (stageScreen === 'slot') { slotStage = fresh; renderSlotStage(); }
+  else if (stageScreen === 'form') { formStage = fresh; renderFormStage(); }
+  else { videoStage = fresh; renderVideoStage(); }
+}
+
 async function loadCaseStudy() {
   const render = data => {
     csData = data;
     CS = fillDeadline(Object.assign({}, CS_DEFAULT, csData.page || {}));
     renderCs();
+    refreshOpenStage();
   };
   try {
     await withCache('/api/cs', render);
