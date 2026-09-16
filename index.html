@@ -276,6 +276,17 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .cs-a-in { overflow: hidden; min-height: 0; }
 .cs-a-body { font-size: 13.5px; color: var(--text-sec); line-height: 1.6; padding: 0 16px 15px; }
 .cs-qa.open .cs-a { grid-template-rows: 1fr; }
+.cs-want.on .cs-check-item { border-color: var(--accent); background: var(--accent-dim2); }
+.cs-want.on .cs-check-box { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cs-want.on .cs-a { grid-template-rows: 1fr; }
+.iv-prep { display: flex; flex-direction: column; gap: 12px; }
+.iv-prep .cs-a-body { white-space: pre-line; }
+.iv-check { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.iv-check-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; margin-top: 4px; }
+.iv-check-head span:last-child { color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.iv-check-done { font-size: 13px; font-weight: 700; color: var(--success); text-align: center; padding: 6px 0 2px; }
+.cs-want-gives { display: flex; gap: 9px; padding: 9px 6px 4px 16px; font-size: 13px; line-height: 1.55; color: var(--text-sec); }
+.cs-want-gives b { color: var(--accent); font-weight: 800; flex-shrink: 0; }
 .cs-qa:not(:last-child).open { border-bottom: 1px solid var(--line); }
 
 .cs-cta { background: var(--ink); border-radius: var(--radius); padding: 22px 20px; color: #fff; text-align: center; }
@@ -1380,12 +1391,7 @@ const CS_DEFAULT = {
   season: "Winter'26",
   weeks: 5,
   deadline: '19 января',
-  wants: [
-    'Хочу побеждать в престижных кейс-чемпионатах',
-    'Хочу найти единомышленников',
-    'Хочу опыт для сильного старта карьеры',
-    'Хочу уверенно презентовать решения перед экспертами',
-  ],
+  wants: [],
   faq: [
     { q: 'Кто может участвовать?', a: 'Студенты всех университетов Санкт-Петербурга.' },
     { q: 'Сколько длится программа?', a: '5 недель интенсивного обучения от победителей прошлых лет.' },
@@ -1527,11 +1533,8 @@ function renderSlotStage() {
         <div class="empty-sub">${txh('iv_done_sub')}</div>
       </div>
 
-      ${s.description ? `
-        <div>
-          <div class="profile-section-title">${txh('iv_prepare_title')}</div>
-          <div class="vid-desc">${s.description}</div>
-        </div>` : ''}
+      ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
+      ${ivPrepHtml(s)}
 
       ${s.can_cancel ? `
         <div class="vid-warn">${txh('iv_cancel_hint')}</div>
@@ -1561,7 +1564,9 @@ function renderSlotStage() {
       </div>
 
       <div class="vid-warn">${txh('iv_choose_note')}</div>
+      ${ivPrepHtml(s)}
     </div>`;
+  ivPaintCheck(s);
 }
 
 async function bookSlot(slotId) {
@@ -1578,6 +1583,64 @@ async function bookSlot(slotId) {
     loadCaseStudy();
     showSuccess(txt('iv_booked_title'), txt('iv_booked_sub', { when: fmtSlot(when) }));
   } catch (e) { showError(e.message); }
+}
+
+// Блок «Как подготовиться»: карточки как частые вопросы + чек-лист с галочками.
+// Пустой — не показываем. Галочки — только на этом телефоне, серверу они не нужны
+function ivPrepHtml(s) {
+  const prep = s.prep || {};
+  const cards = prep.cards || [];
+  const check = prep.checklist || [];
+  if (!cards.length && !check.length) return '';
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return `
+    <div class="iv-prep">
+      <div class="profile-section-title">${txh('iv_prepare_title')}</div>
+      ${cards.length ? `<div class="cs-faq">${cards.map((c, i) => `
+        <div class="cs-qa" id="ivPrep${i}">
+          <div class="cs-q" onclick="document.getElementById('ivPrep${i}').classList.toggle('open')">${esc(c.title)}<div class="cs-q-ic">+</div></div>
+          <div class="cs-a"><div class="cs-a-in"><div class="cs-a-body">${esc(c.text)}</div></div></div>
+        </div>`).join('')}</div>` : ''}
+      ${check.length ? `<div class="iv-check">
+        <div class="iv-check-head"><span>${txh('iv_checklist_title')}</span><span id="ivCheckCount"></span></div>
+        ${check.map((item, i) => `
+          <div class="cs-check-item" id="ivChk${i}" onclick="ivToggleCheck(${s.id}, ${i})">
+            <div class="cs-check-box">✓</div><div>${esc(item)}</div>
+          </div>`).join('')}
+        <div class="iv-check-done" id="ivCheckDone" hidden>${txh('iv_checklist_done')}</div>
+      </div>` : ''}
+    </div>`;
+}
+
+function ivCheckKey(stageId) { return 'hscc:ivcheck:' + stageId; }
+
+function ivReadCheck(stageId) {
+  try { return new Set(JSON.parse(localStorage.getItem(ivCheckKey(stageId)) || '[]')); }
+  catch (e) { return new Set(); }
+}
+
+function ivToggleCheck(stageId, i) {
+  const done = ivReadCheck(stageId);
+  if (done.has(i)) done.delete(i); else done.add(i);
+  try { localStorage.setItem(ivCheckKey(stageId), JSON.stringify([...done])); } catch (e) {}
+  ivPaintCheck(slotStage);
+}
+
+function ivPaintCheck(s) {
+  const total = ((s && s.prep && s.prep.checklist) || []).length;
+  if (!total) return;
+  const done = ivReadCheck(s.id);
+  let n = 0;
+  for (let i = 0; i < total; i++) {
+    const el = document.getElementById('ivChk' + i);
+    const on = done.has(i);
+    if (on) n++;
+    if (el) el.classList.toggle('on', on);
+  }
+  const count = document.getElementById('ivCheckCount');
+  if (count) count.textContent = `${n} из ${total}`;
+  const ok = document.getElementById('ivCheckDone');
+  if (ok) ok.hidden = n < total;
 }
 
 async function cancelBooking() {
@@ -2039,16 +2102,19 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Подходит ли тебе?</div>
-        <div class="cs-note" style="margin:8px 0 12px;">Отметьте то, что про вас.</div>
+        <div class="cs-h2">${txh('cs_want_title')}</div>
+        <div class="cs-note" style="margin:8px 0 12px;">${txh('cs_want_hint')}</div>
         <div class="cs-check">
-          ${CS.wants.map((w, i) => `
-            <div class="cs-check-item" onclick="csToggleWant(${i})" id="csWant${i}">
-              <div class="cs-check-box">✓</div>
-              <div>${w}</div>
+          ${csWants().map((w, i) => `
+            <div class="cs-want" id="csWant${i}">
+              <div class="cs-check-item" onclick="csToggleWant(${i})">
+                <div class="cs-check-box">✓</div>
+                <div>${w.want}</div>
+              </div>
+              ${w.gives ? `<div class="cs-a"><div class="cs-a-in"><div class="cs-want-gives"><b>→</b><span>${w.gives}</span></div></div></div>` : ''}
             </div>`).join('')}
         </div>
-        <div class="cs-verdict" id="csVerdict" style="margin-top:12px;">Отметьте пункты выше — покажем, стоит ли вам идти на программу.</div>
+        <div class="cs-verdict" id="csVerdict" style="margin-top:12px;"></div>
       </div>
 
       <div>
@@ -2107,6 +2173,7 @@ function renderCs() {
 
   csAnimateStats();
   csLoadPhotos();
+  csPaintWants();
 
   const pane = document.getElementById('csSelectionPane');
   const stateBlock = (icon, title, text, button = '', win = false) => `
@@ -2138,15 +2205,35 @@ function renderCs() {
 // ── Интерактив страницы Case Study ──
 const csWantState = new Set();
 
+// Пункты «Хочу…» — пары «чего хочет человек → что для этого даёт программа».
+// Старый формат (просто строки) тоже понимаем
+function csWants() {
+  return (CS.wants || []).map(w => typeof w === 'string' ? { want: w, gives: '' } : w);
+}
+
 function csToggleWant(i) {
-  const el = document.getElementById('csWant' + i);
-  if (csWantState.has(i)) { csWantState.delete(i); el.classList.remove('on'); }
-  else { csWantState.add(i); el.classList.add('on'); }
-  const n = csWantState.size;
+  if (csWantState.has(i)) csWantState.delete(i); else csWantState.add(i);
+  csPaintWants();
+}
+
+// Отметки живут отдельно от разметки: страница перерисовывается при обновлении данных
+function csPaintWants() {
+  csWants().forEach((_, i) => {
+    const el = document.getElementById('csWant' + i);
+    if (el) el.classList.toggle('on', csWantState.has(i));
+  });
   const v = document.getElementById('csVerdict');
-  if (n === 0) v.innerHTML = 'Отметьте пункты выше — покажем, стоит ли вам идти на программу.';
-  else if (n <= 2) v.innerHTML = `<b>Похоже, вам стоит попробовать.</b> На программе как раз это и прокачивают — за ${CS.weeks} недель с теми, кто сам выигрывал чемпионаты.`;
-  else v.innerHTML = `<b>Это точно про вас.</b> Подавайте заявку — регистрация открыта до ${CS.deadline}.`;
+  if (!v) return;
+  // Пунктов нет — не показываем пустой блок
+  v.parentElement.hidden = !csWants().length;
+  if (!csWantState.size) { v.innerHTML = txh('cs_want_empty'); return; }
+  const phase = csData && csData.phase;
+  const btn = phase === 'apply'
+    ? `<button class="btn btn-primary" style="margin-top:12px;" onclick="csApply()">${txh('cs_hero_apply')}</button>`
+    : phase === 'active'
+    ? `<button class="btn btn-ghost" style="margin-top:12px;" onclick="csApply()">${txh('cs_cta_to_stages')}</button>`
+    : '';
+  v.innerHTML = `<b>${txh('cs_want_result')}</b>${btn}`;
 }
 
 function csPhotoFallback(img) {
