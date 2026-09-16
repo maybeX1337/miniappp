@@ -160,6 +160,12 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .form-error { font-size: 12px; color: var(--danger); min-height: 14px; }
 .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2399A0B0' stroke-width='2' stroke-linecap='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
 .form-hint { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+.cs-state { text-align: center; padding: 34px 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; animation: rise .5s var(--ease) both; }
+.cs-state-ic { width: 66px; height: 66px; border-radius: 21px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 31px; margin-bottom: 6px; }
+.cs-state.win .cs-state-ic { background: linear-gradient(135deg, #2E45FF, #B62BD9); box-shadow: 0 10px 28px rgba(46,69,255,0.28); }
+.cs-state-title { font-family: 'Unbounded', sans-serif; font-size: 19px; font-weight: 900; letter-spacing: -0.4px; line-height: 1.25; max-width: 320px; }
+.cs-state-text { font-size: 14px; line-height: 1.6; color: var(--text-sec); max-width: 330px; white-space: pre-line; }
+.cs-state .btn { margin-top: 12px; }
 .confirm-block { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 16px; display: flex; flex-direction: column; gap: 9px; }
 .confirm-row { display: flex; justify-content: space-between; gap: 12px; }
 .confirm-label { font-size: 12.5px; color: var(--text-sec); }
@@ -830,6 +836,23 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
   <div class="test-progress"><div class="test-progress-fill" id="testProgress"></div></div>
   <div id="testBody"></div>
+</div>
+
+<!-- ── ПОДТВЕРЖДЕНИЕ ЗАЯВКИ В ОТБОР ── -->
+<div id="screen-csapply" class="screen">
+  <div class="detail-back" onclick="exitCsApply()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+    Назад
+  </div>
+  <div class="form-header">
+    <div class="form-title" id="csApplyTitle"></div>
+    <div class="form-subtitle" style="margin-top:8px;" id="csApplySub"></div>
+  </div>
+  <div class="form-body">
+    <div class="confirm-block" id="csApplyBlock"></div>
+    <button class="btn btn-primary" id="csApplyGo" onclick="csApplyConfirm()" style="margin-top:8px;"></button>
+    <button class="btn btn-ghost" id="csApplyEdit" onclick="openEditProfile()"></button>
+  </div>
 </div>
 
 <!-- ── СДАЧА ВИДЕО ССЫЛКОЙ ── -->
@@ -1936,10 +1959,21 @@ async function submitTest(auto) {
   }
 }
 
+// В текстах страницы можно писать {deadline} — подставится дата приёма заявок
+// из «🚦 Отбор», и менять её в каждом тексте вручную не придётся
+function fillDeadline(page) {
+  const date = page.deadline || '';
+  const walk = v => typeof v === 'string' ? v.replace(/\{deadline\}/g, date)
+    : Array.isArray(v) ? v.map(walk)
+    : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]))
+    : v;
+  return walk(page);
+}
+
 async function loadCaseStudy() {
   const render = data => {
     csData = data;
-    CS = Object.assign({}, CS_DEFAULT, csData.page || {});
+    CS = fillDeadline(Object.assign({}, CS_DEFAULT, csData.page || {}));
     renderCs();
   };
   try {
@@ -1955,6 +1989,14 @@ async function loadCaseStudy() {
 
 function renderCs() {
   const stages = csData.stages || [];
+  const phase = csData.phase || 'closed';
+  // Кнопка на обложке зависит от того, где человек в отборе. Нет отбора — нет кнопки
+  const heroBtn = {
+    apply: txh('cs_hero_apply'),
+    active: txh('cs_hero_joined'),
+    finalist: txh('cs_hero_result'),
+    awaiting: txh('cs_hero_result'),
+  }[phase] || '';
 
   switchCsTab(csTab);   // подсветка таба не слетает после перерисовки
 
@@ -1966,10 +2008,10 @@ function renderCs() {
         <div class="cs-hero-season">HSCC Case Study · ${CS.season}</div>
         <div class="cs-hero-title">${CS.hero_title}</div>
         <div class="cs-hero-sub">${CS.hero_sub}</div>
-        <div class="cs-hero-row">
-          <button class="cs-hero-btn" onclick="csApply()">${csData.joined ? 'Вы в отборе — к этапам' : 'Подать заявку'}</button>
-          <div class="cs-deadline">до ${CS.deadline}</div>
-        </div>
+        ${heroBtn || csData.reg_open ? `<div class="cs-hero-row">
+          ${heroBtn ? `<button class="cs-hero-btn" onclick="csApply()">${heroBtn}</button>` : ''}
+          ${csData.reg_open ? `<div class="cs-deadline">${txh('cs_hero_deadline', { deadline: CS.deadline })}</div>` : ''}
+        </div>` : ''}
       </div>
 
       <div>
@@ -2055,19 +2097,37 @@ function renderCs() {
         </div>
       </div>
 
-      <div class="cs-cta">
+      ${phase === 'apply' || phase === 'active' ? `<div class="cs-cta">
         <div class="cs-cta-t">${CS.cta_title} · ${CS.season}</div>
-        <div class="cs-cta-d">Дедлайн регистрации — ${CS.deadline}. ${CS.cta_text}</div>
-        <button class="cs-cta-btn" onclick="csApply()">${csData.joined ? 'Перейти к этапам отбора' : 'Подать заявку'}</button>
-      </div>
+        <div class="cs-cta-d">${csData.reg_open ? txh('cs_cta_deadline', { deadline: CS.deadline }) + ' ' : ''}${CS.cta_text}</div>
+        <button class="cs-cta-btn" onclick="csApply()">${phase === 'active' ? txh('cs_cta_to_stages') : txh('cs_hero_apply')}</button>
+      </div>` : ''}
 
     </div>`;
 
   csAnimateStats();
   csLoadPhotos();
 
-  const joined = !!csData.joined;
-  document.getElementById('csSelectionPane').innerHTML = `
+  const pane = document.getElementById('csSelectionPane');
+  const stateBlock = (icon, title, text, button = '', win = false) => `
+    <div class="cs-state${win ? ' win' : ''}">
+      <div class="cs-state-ic">${icon}</div>
+      <div class="cs-state-title">${title}</div>
+      <div class="cs-state-text">${text}</div>
+      ${button}
+    </div>`;
+
+  if (phase === 'finalist') {
+    pane.innerHTML = stateBlock('🎉', txh('cs_finalist_title'), txh('cs_finalist_text'),
+      csData.chat_link ? `<button class="btn btn-primary" onclick="openChatLink()">${txh('cs_finalist_btn')}</button>` : '', true);
+    return;
+  }
+  if (phase === 'awaiting') { pane.innerHTML = stateBlock('⏳', txh('cs_awaiting_title'), txh('cs_awaiting_text')); return; }
+  if (phase === 'reg_closed') { pane.innerHTML = stateBlock('📭', txh('cs_reg_closed_title'), txh('cs_reg_closed_text')); return; }
+  if (phase === 'closed') { pane.innerHTML = stateBlock('🗓', txh('cs_closed_title'), txh('cs_closed_text')); return; }
+
+  const joined = phase === 'active';
+  pane.innerHTML = `
     ${joined
       ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(11,166,120,0.35);background:rgba(11,166,120,0.07);"><div class="callout-title">' + txh('cs_in_title') + '</div>' + txh('cs_in_text') + '</div>'
       : `<div class="cs-lead" style="margin-bottom:16px;">${txh('cs_lead', { deadline: CS.deadline })}</div>
@@ -2135,23 +2195,74 @@ function csAnimateStats() {
   });
 }
 
-async function csApply() {
-  // Уже подали — просто показываем этапы
-  if (csData && csData.joined) { switchCsTab('selection'); return; }
-
+function csApply() {
+  // Подавать заявку можно только в фазе приёма — иначе ведём к своему состоянию во вкладке «Отбор»
+  if (!csData || csData.phase !== 'apply') { switchCsTab('selection'); return; }
   if (!myProfile || !myProfile.onboarded) {
     showHint(txt('cs_need_profile'));
     return;
   }
+  openCsApply();
+}
+
+function openCsApply() {
+  const p = myProfile || {};
+  const esc = v => String(v || '—').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const nick = p.username || (tgUser && tgUser.username);
+  const rows = [
+    ['ФИО', p.full_name],
+    ['Вуз', p.university_other || p.university],
+    ['Курс', p.course],
+    ['Программа', p.program],
+    ['Email', p.email],
+    ['Телефон', p.phone],
+    ['Telegram', nick ? '@' + nick : ''],
+  ];
+  document.getElementById('csApplyTitle').textContent = txt('cs_confirm_title');
+  document.getElementById('csApplySub').textContent = txt('cs_confirm_sub');
+  document.getElementById('csApplyBlock').innerHTML = rows.map(([k, v]) =>
+    `<div class="confirm-row"><span class="confirm-label">${k}</span><span class="confirm-value">${esc(v)}</span></div>`
+  ).join('');
+  const go = document.getElementById('csApplyGo');
+  go.disabled = false;
+  go.textContent = txt('cs_confirm_go');
+  document.getElementById('csApplyEdit').textContent = txt('cs_confirm_edit');
+  showScreen('csapply');
+  document.getElementById('screen-csapply').scrollTop = 0;
+}
+
+function exitCsApply() {
+  showScreen('members');
+  setNav(document.getElementById('nav-members'));
+  switchCsTab('selection');
+}
+
+async function csApplyConfirm() {
+  const btn = document.getElementById('csApplyGo');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
   try {
     const res = await apiCall('/api/cs/join', { method: 'POST' });
     dropCache('/api/cs');
-    // Этапы берём заново с сервера: до заявки он посчитал их все закрытыми,
-    // и если поменять только флаг «в отборе», замки останутся старые
+    // Этапы берём заново с сервера: до заявки он посчитал их все закрытыми
     await loadCaseStudy();
-    switchCsTab('selection');
+    exitCsApply();
     showSuccess(res.already_joined ? txt('cs_already_title') : txt('cs_joined_title'), txt('cs_joined_sub'));
-  } catch (e) { showError(e.message); }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = txt('cs_confirm_go');
+    showError(e.message);
+  }
+}
+
+// Ссылка на закрытый чат: через Telegram, чтобы не открывался браузер
+function openChatLink() {
+  const url = csData && csData.chat_link;
+  if (!url) return;
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(url)) tg.openTelegramLink(url);
+  else if (tg && tg.openLink) tg.openLink(url);
+  else window.open(url, '_blank');
 }
 
 // старое имя — на случай кнопок в закэшированной версии
