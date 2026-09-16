@@ -932,6 +932,29 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 </div>
 
 <script>
+// Свежая версия приложения. GitHub Pages разрешает хранить копию страницы 10 минут,
+// и Telegram после заливки показывает старую. Сверяем код с файлом на сервере в обход
+// кэша; отличается — перезагружаемся на адрес с отметкой версии. Один раз на версию.
+(() => {
+  const hash = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = (h * 33 + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  const own = document.currentScript ? hash(document.currentScript.textContent) : null;
+  if (!own || location.protocol === 'file:') return;
+  fetch(location.pathname + '?fresh=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.ok ? r.text() : '')
+    .then(html => {
+      const scripts = html.match(/<script>([\s\S]*?)<\/script>/);
+      if (!scripts) return;
+      const latest = hash(scripts[1]);
+      if (latest === own) return;
+      const key = 'hscc:reloaded:' + latest;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) { return; }
+      const params = new URLSearchParams(location.search);
+      params.set('v', latest);
+      location.replace(location.pathname + '?' + params + location.hash);   // в hash — данные Telegram
+    })
+    .catch(() => {});
+})();
+
 // ⚠️ ВАЖНО: вписать актуальный URL ngrok / задеплоенного API
 const API_URL = 'https://extradite-entering-remover.ngrok-free.dev';
 
