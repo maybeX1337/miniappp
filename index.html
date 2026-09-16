@@ -448,6 +448,9 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .overlay-icon.error { background: rgba(239,68,68,0.09); }
 .overlay-icon svg { width: 36px; height: 36px; color: var(--success); }
 .overlay-icon.error svg { color: var(--danger); }
+.overlay-icon.warn { background: rgba(46,69,255,0.09); }
+.overlay-icon.warn svg { color: var(--accent); }
+.overlay-btn.ghost { margin-top: 10px; background: transparent; color: var(--text-sec); box-shadow: none; }
 .overlay-title { font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.3px; }
 .overlay-sub { font-size: 14px; color: var(--text-sec); line-height: 1.55; margin-bottom: 24px; white-space: pre-line; }
 .overlay-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: 'Onest', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(46,69,255,0.28); }
@@ -854,9 +857,19 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 <div class="overlay" id="errorOverlay">
   <div class="overlay-card">
     <div class="overlay-icon error"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></div>
-    <div class="overlay-title">Ошибка</div>
+    <div class="overlay-title" id="errorTitle">Ошибка</div>
     <div class="overlay-sub" id="errorMsg">Что-то пошло не так</div>
     <button class="overlay-btn" onclick="closeOverlay()">Понятно</button>
+  </div>
+</div>
+
+<div class="overlay" id="testStartOverlay">
+  <div class="overlay-card">
+    <div class="overlay-icon warn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="13" r="8"/><path stroke-linecap="round" d="M12 9v4l2.5 2M9.5 2.5h5"/></svg></div>
+    <div class="overlay-title" id="testStartTitle"></div>
+    <div class="overlay-sub" id="testStartText"></div>
+    <button class="overlay-btn" id="testStartGo"></button>
+    <button class="overlay-btn ghost" id="testStartBack" onclick="closeOverlay()"></button>
   </div>
 </div>
 
@@ -947,6 +960,35 @@ function apiGet(ep) {
 }
 
 // Отдаёт кэш сразу, затем при необходимости обновляет и перерисовывает
+// ── ТЕКСТЫ ИНТЕРФЕЙСА ──
+// Формулировки приходят с сервера: администратор меняет их в боте,
+// «Управление» → «📝 Тексты». Здесь только подстановка значений.
+let TXT = {};
+
+function txt(key, vars) {
+  let s = TXT[key];
+  if (s == null) return '';
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+  return s;
+}
+
+// Для вставки в разметку: текст от администратора не должен ломать вёрстку
+function txh(key, vars) {
+  return txt(key, vars).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function loadTexts() {
+  const apply = d => { TXT = d || {}; };
+  const hit = readCache('/api/texts');
+  if (hit) {
+    // Из кэша — сразу, свежие подтянутся в фоне
+    apply(hit.data);
+    withCache('/api/texts', apply).catch(() => {});
+    return;
+  }
+  try { await withCache('/api/texts', apply); } catch (e) {}
+}
+
 async function withCache(ep, render, ttl = CACHE_TTL) {
   const hit = readCache(ep);
   if (hit) {
@@ -1077,7 +1119,7 @@ async function sendEmailCode(prefix) {
         btn.textContent = `Ещё раз (${left})`;
       }
     }, 1000);
-    showSuccess('Код отправлен', `Проверьте почту ${email} (и папку «Спам»)`);
+    showSuccess(txt('email_code_title'), txt('email_code_sub', { email }));
   } catch (e) {
     btn.textContent = oldText;
     btn.disabled = false;
@@ -1135,6 +1177,7 @@ function setNav(el) {
 
 // ── INIT ──
 async function init() {
+  await loadTexts();
   // Сразу показываем loader на экране событий, чтобы юзер не видел пустоту
   const eventsList = document.getElementById('eventsList');
   if (eventsList) {
@@ -1271,12 +1314,12 @@ async function submitProfile(prefix, btnId, isFirstTime) {
       buildNav();
       await loadEvents();
       navigate('events', document.getElementById('nav-events'));
-      showSuccess('Профиль создан!', 'Теперь регистрация на любое мероприятие — в один клик');
+      showSuccess(txt('profile_created_title'), txt('profile_created_sub'));
     } else {
       showScreen('profile');
       setNav(document.getElementById('nav-profile'));
       loadProfile();
-      showSuccess('Профиль обновлён', 'Данные сохранены');
+      showSuccess(txt('profile_updated_title'), txt('profile_updated_sub'));
     }
   } catch (e) {
     showError(e.message);
@@ -1387,20 +1430,22 @@ function csStageCard(s, i, withProgress) {
         action = `<div class="stage-lock">🗓 Вы записаны: ${fmtSlot(s.my_slot)}</div>`
           + (s.can_view
             ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">${
-                s.can_cancel ? 'Памятка и отмена записи' : 'Открыть памятку'}</button>`
+                s.can_cancel ? txh('iv_card_memo_cancel') : txh('iv_card_memo')}</button>`
             : '');
       } else {
         action = '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
       }
     } else if (current) {
       action = s.kind === 'interview'
-        ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">Выбрать время</button>`
+        ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">${txh('iv_card_btn')}</button>`
         : s.kind === 'form'
-        ? `<button class="stage-open-btn" onclick="openFormStage(${s.id})">Открыть этап</button>`
+        ? `<button class="stage-open-btn" onclick="openFormStage(${s.id})">${txh('form_card_btn')}</button>`
         : s.kind === 'video'
         ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">Отправить видео</button>`
         : s.has_test
-          ? `<button class="stage-open-btn" onclick="openTest(${s.id})">Пройти этап</button>`
+          ? (s.test_started
+              ? `<button class="stage-open-btn" onclick="openTest(${s.id})">${txh('test_continue_btn')}</button>`
+              : `<button class="stage-open-btn" onclick="askStartTest(${s.id})">${txh('test_open_btn')}</button>`)
           : (s.link ? `<a class="stage-link" href="${s.link}" target="_blank">Перейти к этапу</a>` : '');
     } else if (locked && !res) {
       action = `<div class="stage-lock">
@@ -1454,27 +1499,22 @@ function renderSlotStage() {
     <div class="vid-wrap">
       <div class="vid-done">
         <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="empty-title">Вы записаны</div>
+        <div class="empty-title">${txh('iv_done_title')}</div>
         <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
-        <div class="empty-sub">С вами свяжутся в Telegram перед началом.</div>
+        <div class="empty-sub">${txh('iv_done_sub')}</div>
       </div>
 
       ${s.description ? `
         <div>
-          <div class="profile-section-title">Как подготовиться</div>
+          <div class="profile-section-title">${txh('iv_prepare_title')}</div>
           <div class="vid-desc">${s.description}</div>
         </div>` : ''}
 
       ${s.can_cancel ? `
-        <div class="vid-warn">
-          Не сможете прийти в это время? Освободите слот — его займёт кто-то другой,
-          а вы выберете другое время, пока они есть.
-        </div>
-        <button class="btn btn-danger" onclick="cancelBooking()">Отменить запись</button>
+        <div class="vid-warn">${txh('iv_cancel_hint')}</div>
+        <button class="btn btn-danger" onclick="cancelBooking()">${txh('iv_cancel_btn')}</button>
       ` : `
-        <div class="vid-warn">
-          Отменить запись уже нельзя — организаторы подвели итоги этапа.
-        </div>`}
+        <div class="vid-warn">${txh('iv_cancel_closed')}</div>`}
     </div>` : `
     <div class="vid-wrap">
       <div>
@@ -1484,7 +1524,7 @@ function renderSlotStage() {
       ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
 
       <div>
-        <div class="profile-section-title">Выберите удобное время</div>
+        <div class="profile-section-title">${txh('iv_choose_title')}</div>
         ${slots.length ? `<div class="slots-list">
           ${slots.map(sl => `
             <div class="slot${sl.free > 0 ? '' : ' busy'}" ${sl.free > 0 ? `onclick="bookSlot(${sl.id})"` : ''}>
@@ -1494,12 +1534,10 @@ function renderSlotStage() {
               </div>
               <div class="slot-free">${sl.free > 0 ? 'Свободно' : 'Занято'}</div>
             </div>`).join('')}
-        </div>` : '<div class="vid-desc">Время пока не назначено — загляните позже, мы добавим слоты.</div>'}
+        </div>` : `<div class="vid-desc">${txh('iv_no_slots')}</div>`}
       </div>
 
-      <div class="vid-warn">
-        Выбрать можно <b>один раз</b>. Если время не подойдёт — напишите организаторам.
-      </div>
+      <div class="vid-warn">${txh('iv_choose_note')}</div>
     </div>`;
 }
 
@@ -1515,16 +1553,13 @@ async function bookSlot(slotId) {
     // и увидит её уже с актуальной кнопкой отмены
     exitVideo();
     loadCaseStudy();
-    showSuccess('Вы записаны!', `Интервью ${fmtSlot(when)}. С вами свяжутся в Telegram.`);
+    showSuccess(txt('iv_booked_title'), txt('iv_booked_sub', { when: fmtSlot(when) }));
   } catch (e) { showError(e.message); }
 }
 
 async function cancelBooking() {
   const when = fmtSlot(slotStage.my_slot);
-  const ok = await askConfirm(
-    `Отменить запись на ${when}?\n\nСлот освободится, и его смогут занять другие. ` +
-    `Записаться заново можно будет только на свободное время.`
-  );
+  const ok = await askConfirm(txt('iv_cancel_confirm', { when }));
   if (!ok) return;
 
   try {
@@ -1539,7 +1574,7 @@ async function cancelBooking() {
     const updated = (csData.stages || []).find(x => x.id === slotStage.id);
     if (updated) slotStage = updated;
     renderSlotStage();
-    showSuccess('Запись отменена', 'Слот снова свободен. Выберите другое время, когда будете готовы.');
+    showSuccess(txt('iv_cancelled_title'), txt('iv_cancelled_sub'));
   } catch (e) { showError(e.message); }
 }
 
@@ -1579,13 +1614,13 @@ function renderFormStage() {
       ${s.link ? `
         <div>
           <button class="btn btn-primary go-form" onclick="openStageLink()">
-            Открыть форму
+            ${txh('form_open_btn')}
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5M19 5l-8 8M17 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h4"/></svg>
           </button>
           <div class="go-form-host">${linkHost(s.link)}</div>
         </div>
         ${s.note ? `<div class="vid-warn">${s.note}</div>` : ''}` : `
-        <div class="vid-warn">Ссылка пока не опубликована — загляните чуть позже.</div>`}
+        <div class="vid-warn">${txh('form_no_link')}</div>`}
     </div>`;
 }
 
@@ -1701,14 +1736,47 @@ let testBlockIdx = 0;
 let testTimerId = null;
 let testDeadline = null;
 
+// Окно перед тестом. Сервер запускает таймер при первом открытии теста,
+// поэтому до «Пройти сейчас» к нему не обращаемся — «Вернуться» ничего не тратит
+function askStartTest(stageId) {
+  const s = (csData.stages || []).find(x => x.id === stageId);
+  if (!s) return;
+  const mins = s.duration_min || 0;
+  const minutesText = `${mins} ${plural(mins, 'минута', 'минуты', 'минут')}`;
+  document.getElementById('testStartTitle').textContent = txt('test_start_title');
+  document.getElementById('testStartText').textContent = txt('test_start_text', { minutes: minutesText });
+  document.getElementById('testStartGo').textContent = txt('test_start_go');
+  document.getElementById('testStartBack').textContent = txt('test_start_back');
+  document.getElementById('testStartGo').onclick = () => { closeOverlay(); openTest(stageId); };
+  document.getElementById('testStartOverlay').classList.add('show');
+}
+
+// Ответы уходят на сервер по ходу теста: выход или закрытие приложения их не стирают
+let draftTimer = null;
+function saveDraftSoon() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraftNow, 700);
+}
+function saveDraftNow() {
+  clearTimeout(draftTimer);
+  if (!testData || !testData.stage) return;
+  apiCall(`/api/cs/stage/${testData.stage.id}/draft`, {
+    method: 'POST', body: JSON.stringify({ answers: testAnswers })
+  }).catch(() => {});
+}
+
 async function openTest(stageId) {
   try {
     testData = await apiCall(`/api/cs/stage/${stageId}/test`);
     if (testData.submitted) {
-      showHint('Вы уже отправили ответы на этот этап. Результаты объявят организаторы.');
+      dropCache('/api/cs');
+      loadCaseStudy();
+      showHint(testData.expired ? txt('test_expired') : txt('test_already_sent'));
       return;
     }
-    testAnswers = {};
+    // Возвращаем ответы, отмеченные до выхода из теста
+    testAnswers = Object.assign({}, testData.draft || {});
+    dropCache('/api/cs');
     testBlockIdx = 0;
     testDeadline = testData.seconds_left != null ? Date.now() + testData.seconds_left * 1000 : null;
     document.getElementById('testStageName').textContent = testData.stage.name;
@@ -1789,6 +1857,7 @@ function pickAnswer(qid, optIdx, el) {
     if (miss) miss.textContent = '';
   }
   updateTestProgress();
+  saveDraftSoon();
 }
 
 function updateTestProgress() {
@@ -1834,7 +1903,11 @@ function startTestTimer() {
 }
 
 function exitTest() {
+  if (draftTimer) saveDraftNow();
   clearInterval(testTimerId);
+  // Тест начат — карточка должна предлагать «Продолжить», а не окно с «попытка не потратится»
+  dropCache('/api/cs');
+  loadCaseStudy();
   showScreen('members');
   setNav(document.getElementById('nav-members'));
 }
@@ -1843,10 +1916,12 @@ async function submitTest(auto) {
   const btn = document.getElementById('testSubmitBtn');
   if (btn) { btn.innerHTML = '<div class="spinner"></div>'; btn.disabled = true; }
   try {
-    await apiCall(`/api/cs/stage/${testData.stage.id}/submit`, {
+    clearTimeout(draftTimer); draftTimer = null;
+    const res = await apiCall(`/api/cs/stage/${testData.stage.id}/submit`, {
       method: 'POST',
       body: JSON.stringify({ answers: testAnswers })
     });
+    if (res && res.late) auto = true;
     clearInterval(testTimerId);
     dropCache('/api/cs');
     document.getElementById('testTimer').textContent = '';
@@ -1854,10 +1929,7 @@ async function submitTest(auto) {
     // Возвращаем на страницу этапов и показываем подтверждение
     exitTest();
     loadCaseStudy();
-    showSuccess(
-      auto ? 'Время вышло — ответы отправлены' : 'Ответы записаны!',
-      'Результаты объявят организаторы — сообщение придёт в бота.'
-    );
+    showSuccess(auto ? txt('test_timeup_title') : txt('test_sent_title'), txt('test_sent_sub'));
   } catch (e) {
     if (btn) { btn.textContent = 'Отправить'; btn.disabled = false; }
     showError(e.message);
@@ -1874,7 +1946,7 @@ async function loadCaseStudy() {
     await withCache('/api/cs', render);
   } catch (e) {
     if (!readCache('/api/cs')) {
-      const err = `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+      const err = `<div class="empty-state"><div class="empty-title">${txh('err_load') || 'Не удалось загрузить'}</div><div class="empty-sub">${e.message}</div></div>`;
       document.getElementById('csInfoPane').innerHTML = err;
       document.getElementById('csSelectionPane').innerHTML = err;
     }
@@ -1997,9 +2069,9 @@ function renderCs() {
   const joined = !!csData.joined;
   document.getElementById('csSelectionPane').innerHTML = `
     ${joined
-      ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(11,166,120,0.35);background:rgba(11,166,120,0.07);"><div class="callout-title">Вы участвуете в отборе</div>Ссылки на этапы открываются, когда этап начинается. Результаты придут в бота.</div>'
-      : `<div class="cs-lead" style="margin-bottom:16px;">Заявка подаётся прямо здесь — данные возьмём из вашего профиля, ничего заполнять заново не нужно. Приём заявок до ${CS.deadline}.</div>
-         <button class="btn btn-primary" style="margin-bottom:18px;" onclick="csApply()">Подать заявку на отбор</button>`}
+      ? '<div class="callout" style="margin-bottom:20px;border-color:rgba(11,166,120,0.35);background:rgba(11,166,120,0.07);"><div class="callout-title">' + txh('cs_in_title') + '</div>' + txh('cs_in_text') + '</div>'
+      : `<div class="cs-lead" style="margin-bottom:16px;">${txh('cs_lead', { deadline: CS.deadline })}</div>
+         <button class="btn btn-primary" style="margin-bottom:18px;" onclick="csApply()">${txh('cs_apply_btn')}</button>`}
     <div class="stage-list">${stages.map((s, i) => csStageCard(s, i, true)).join('')}</div>`;
 }
 
@@ -2068,7 +2140,7 @@ async function csApply() {
   if (csData && csData.joined) { switchCsTab('selection'); return; }
 
   if (!myProfile || !myProfile.onboarded) {
-    showHint('Сначала заполните профиль во вкладке «Профиль» — данные для заявки берутся оттуда.');
+    showHint(txt('cs_need_profile'));
     return;
   }
   try {
@@ -2078,10 +2150,7 @@ async function csApply() {
     // и если поменять только флаг «в отборе», замки останутся старые
     await loadCaseStudy();
     switchCsTab('selection');
-    showSuccess(
-      res.already_joined ? 'Вы уже в отборе' : 'Заявка принята!',
-      'Этапы отбора появятся ниже. Как только этап откроется, здесь будет кнопка «Пройти этап», а результаты придут в бота.'
-    );
+    showSuccess(res.already_joined ? txt('cs_already_title') : txt('cs_joined_title'), txt('cs_joined_sub'));
   } catch (e) { showError(e.message); }
 }
 
@@ -2216,7 +2285,7 @@ async function loadEvents() {
     document.getElementById('eventsList').innerHTML = `
       <div class="empty-state">
         <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
-        <div class="empty-title">Не удалось загрузить</div>
+        <div class="empty-title">${txh('err_load') || 'Не удалось загрузить'}</div>
         <div class="empty-sub">${e.message}</div>
       </div>`;
   }
@@ -2229,8 +2298,8 @@ function renderEvents() {
     list.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></div>
-        <div class="empty-title">${currentTab === 'upcoming' ? 'Пока нет предстоящих мероприятий' : 'Прошедших мероприятий нет'}</div>
-        <div class="empty-sub">Следите за анонсами в боте</div>
+        <div class="empty-title">${currentTab === 'upcoming' ? txh('ev_empty_upcoming') : txh('ev_empty_past')}</div>
+        <div class="empty-sub">${txh('ev_empty_sub')}</div>
       </div>`;
     return;
   }
@@ -2378,9 +2447,9 @@ async function confirmRegistration() {
     const uniSaved = (myProfile?.university_other || myProfile?.university || '').trim().toUpperCase();
     const extGuest = !['ВШЭ', 'НИУ ВШЭ', 'HSE'].includes(uniSaved);
     if (extGuest) {
-      showSuccess('Вы зарегистрированы!', 'Подтверждение отправлено в бота. Не забудьте паспорт — и проверьте почту: туда придёт QR-код для входа в вуз.');
+      showSuccess(txt('ev_reg_title'), txt('ev_reg_external'));
     } else {
-      showSuccess('Вы зарегистрированы!', 'Подтверждение отправлено в бота. Детали — во вкладке «Мои события».');
+      showSuccess(txt('ev_reg_title'), txt('ev_reg_internal'));
     }
   } catch (e) {
     showError(e.message);
@@ -2396,6 +2465,7 @@ function showSuccess(title, sub) {
   document.getElementById('successOverlay').classList.add('show');
 }
 function showError(msg) {
+  document.getElementById('errorTitle').textContent = txt('err_title') || 'Ошибка';
   document.getElementById('errorMsg').textContent = msg;
   document.getElementById('errorOverlay').classList.add('show');
 }
@@ -2445,8 +2515,8 @@ async function loadTickets() {
     if (!myRegList.length) {
       wrap.innerHTML = head + `
         <div class="empty-state" style="align-items:flex-start;text-align:left;padding:28px 0;">
-          <div class="empty-title" style="text-align:left;">Пока пусто</div>
-          <div class="empty-sub" style="text-align:left;">Выберите мероприятие в афише и нажмите «Записаться» — оно появится здесь, а бот напомнит о нём заранее.</div>
+          <div class="empty-title" style="text-align:left;">${txh('my_empty_title')}</div>
+          <div class="empty-sub" style="text-align:left;">${txh('my_empty_sub')}</div>
           <div class="my-link" style="margin-top:14px;" onclick="navigate('events', document.getElementById('nav-events'))">Открыть афишу →</div>
         </div>`;
       return;
@@ -2493,7 +2563,7 @@ async function loadTickets() {
     await withCache('/api/my/registrations', render);
   } catch (e) {
     if (!readCache('/api/my/registrations')) {
-      wrap.innerHTML = head + `<div class="empty-state"><div class="empty-title">Не удалось загрузить</div><div class="empty-sub">${e.message}</div></div>`;
+      wrap.innerHTML = head + `<div class="empty-state"><div class="empty-title">${txh('err_load') || 'Не удалось загрузить'}</div><div class="empty-sub">${e.message}</div></div>`;
     }
   }
 }
