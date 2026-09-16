@@ -280,7 +280,22 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .cs-want.on .cs-check-box { background: var(--accent); border-color: var(--accent); color: #fff; }
 .cs-want.on .cs-a { grid-template-rows: 1fr; }
 .iv-prep { display: flex; flex-direction: column; gap: 12px; }
-.iv-prep .cs-a-body { white-space: pre-line; }
+.iv-days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; margin: 0 -2px; scrollbar-width: none; }
+.iv-days::-webkit-scrollbar { display: none; }
+.iv-day { flex: 0 0 auto; width: 58px; padding: 9px 0 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: 'Onest', sans-serif; color: var(--text); cursor: pointer; transition: transform .12s var(--ease); }
+.iv-day:active { transform: scale(.95); }
+.iv-day span { font-size: 10.5px; font-weight: 650; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+.iv-day b { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.iv-day.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(46,69,255,.28); }
+.iv-day.on span { color: rgba(255,255,255,.82); }
+.iv-times { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.iv-time { padding: 11px 4px 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: 'Onest', sans-serif; color: var(--text); cursor: pointer; transition: transform .12s var(--ease), border-color .18s var(--ease); }
+.iv-time:active { transform: scale(.96); border-color: var(--accent); }
+.iv-time b { font-size: 15.5px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.iv-time span { font-size: 10.5px; font-weight: 650; color: var(--accent); }
+.iv-link-btn { margin-top: 4px; }
+.prep-cards .cs-a-body { white-space: pre-line; }
+.prep-link { color: var(--accent); font-weight: 600; word-break: break-all; }
 .iv-check { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .iv-check-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; margin-top: 4px; }
 .iv-check-head span:last-child { color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -307,6 +322,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .stage-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.3; }
 .stage-status { display: flex; gap: 8px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
 .stage-dates { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.stage-own { margin-top: 10px; font-size: 12.5px; font-weight: 700; color: var(--accent); }
 .stage-desc { font-size: 13px; color: var(--text-sec); line-height: 1.55; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .stage-link { display: inline-block; margin-top: 12px; padding: 11px 18px; background: var(--accent); color: #fff; border-radius: 11px; font-size: 13px; font-weight: 700; text-decoration: none; box-shadow: 0 5px 14px rgba(46,69,255,0.28); }
 .cs-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
@@ -1470,7 +1486,7 @@ function csStageCard(s, i, withProgress) {
         : s.kind === 'form'
         ? `<button class="stage-open-btn" onclick="openFormStage(${s.id})">${txh('form_card_btn')}</button>`
         : s.kind === 'video'
-        ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">Отправить видео</button>`
+        ? `<button class="stage-open-btn" onclick="openVideoStage(${s.id})">${txh('vid_card_btn')}</button>`
         : s.has_test
           ? (s.test_started
               ? `<button class="stage-open-btn" onclick="openTest(${s.id})">${txh('test_continue_btn')}</button>`
@@ -1497,6 +1513,7 @@ function csStageCard(s, i, withProgress) {
           ${resLabel}
         </div>
         ${s.description ? `<div class="stage-desc">${shortDesc(s.description)}</div>` : ''}
+        ${withProgress && s.override_until ? `<div class="stage-own">${txh('cs_override_note', { date: s.override_until })}</div>` : ''}
         ${action}
       </div>
     </div>`;
@@ -1512,24 +1529,86 @@ function fmtSlot(iso) {
   return `${parseInt(day, 10)} ${months[parseInt(m, 10) - 1] || ''}, ${t || ''}`;
 }
 
+let ivDay = null;            // выбранный день в выборе времени
+let ivRescheduling = false;  // человек выбирает новое время вместо текущего
+
 function openSlotStage(stageId) {
   slotStage = (csData.stages || []).find(s => s.id === stageId);
   if (!slotStage) return;
+  ivDay = null;
+  ivRescheduling = false;
   renderSlotStage();
   showScreen('video');
   document.getElementById('screen-video').scrollTop = 0;
 }
 
+// Свободное время по дням. Одно время в одном формате — одна кнопка,
+// даже если в это время свободны несколько интервьюеров: сервер сам назначит любого
+function ivFreeByDay(s) {
+  const days = new Map();
+  (s.slots || []).filter(x => x.free > 0 && x.slot_at !== s.my_slot).forEach(x => {
+    const [d, t] = x.slot_at.split(' ');
+    if (!days.has(d)) days.set(d, new Map());
+    const key = t + '|' + (x.format || '');
+    if (!days.get(d).has(key)) days.get(d).set(key, { time: t, format: x.format || '', slotId: x.id });
+  });
+  return [...days.entries()].sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, m]) => ({ day, times: [...m.values()].sort((a, b) => a.time.localeCompare(b.time)) }));
+}
+
+function ivFormatKey(f) { return f === 'offline' ? 'iv_format_offline' : f === 'online' ? 'iv_format_online' : ''; }
+
+function ivPickerHtml(s) {
+  const days = ivFreeByDay(s);
+  if (!days.length) return `<div class="vid-desc">${txh('iv_no_slots')}</div>`;
+  if (!ivDay || !days.find(x => x.day === ivDay)) ivDay = days[0].day;
+  const wd = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  const mon = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  const current = days.find(x => x.day === ivDay);
+  return `
+    <div class="iv-days">${days.map(x => {
+      const dt = new Date(x.day + 'T00:00:00');
+      return `<button class="iv-day${x.day === ivDay ? ' on' : ''}" onclick="ivPickDay('${x.day}')">
+        <span>${wd[dt.getDay()]}</span><b>${dt.getDate()}</b><span>${mon[dt.getMonth()]}</span></button>`;
+    }).join('')}</div>
+    <div class="iv-times">${current.times.map(t => `
+      <button class="iv-time" onclick="ivPickTime(${t.slotId})">
+        <b>${t.time}</b>${ivFormatKey(t.format) ? `<span>${txh(ivFormatKey(t.format))}</span>` : ''}
+      </button>`).join('')}</div>`;
+}
+
+// Где пройдёт интервью — видно только после записи
+function ivPlaceHtml(s) {
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  if (s.my_format === 'online') {
+    if (/^https?:\/\//.test(s.my_place || '')) {
+      return `<button class="btn btn-primary iv-link-btn" data-url="${esc(s.my_place)}" onclick="openExternal(this.dataset.url)">${txh('iv_place_link_btn')}</button>`;
+    }
+    return `<div class="empty-sub">${s.my_place ? esc(s.my_place) : txh('iv_place_no_link')}</div>`;
+  }
+  if (s.my_format === 'offline') {
+    return `<div class="empty-sub">${s.my_place ? txh('iv_place_offline', { place: s.my_place }) : txh('iv_place_offline_empty')}</div>`;
+  }
+  return '';
+}
+
 function renderSlotStage() {
   const s = slotStage;
-  const slots = s.slots || [];
+  const body = document.getElementById('videoBody');
+  const head = `
+      <div>
+        <div class="eyebrow">${txh('stage_eyebrow')}</div>
+        <div class="vid-title" style="margin-top:7px;">${s.name}</div>
+      </div>`;
 
-  document.getElementById('videoBody').innerHTML = s.submitted ? `
+  if (s.submitted && !ivRescheduling) {
+    body.innerHTML = `
     <div class="vid-wrap">
       <div class="vid-done">
         <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="empty-title">${txh('iv_done_title')}</div>
-        <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
+        <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b>${ivFormatKey(s.my_format) ? ' · ' + txh(ivFormatKey(s.my_format)) : ''}</div>
+        ${ivPlaceHtml(s)}
         <div class="empty-sub">${txh('iv_done_sub')}</div>
       </div>
 
@@ -1538,35 +1617,92 @@ function renderSlotStage() {
 
       ${s.can_cancel ? `
         <div class="vid-warn">${txh('iv_cancel_hint')}</div>
+        <button class="btn btn-ghost" onclick="ivStartReschedule()">${txh('iv_reschedule_btn')}</button>
         <button class="btn btn-danger" onclick="cancelBooking()">${txh('iv_cancel_btn')}</button>
       ` : `
-        <div class="vid-warn">${txh('iv_cancel_closed')}</div>`}
-    </div>` : `
+        <div class="vid-warn">${s.change_closed === 'cutoff'
+          ? txh('iv_change_closed', { hours: s.cutoff_h })
+          : txh('iv_cancel_closed')}</div>`}
+    </div>`;
+  } else if (ivRescheduling) {
+    body.innerHTML = `
     <div class="vid-wrap">
+      ${head}
       <div>
-        <div class="eyebrow">Этап отбора</div>
-        <div class="vid-title" style="margin-top:7px;">${s.name}</div>
+        <div class="profile-section-title">${txh('iv_reschedule_title')}</div>
+        ${ivPickerHtml(s)}
       </div>
+      <button class="btn btn-ghost" onclick="ivCancelReschedule()">${txh('iv_reschedule_back')}</button>
+    </div>`;
+  } else {
+    body.innerHTML = `
+    <div class="vid-wrap">
+      ${head}
       ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
-
       <div>
         <div class="profile-section-title">${txh('iv_choose_title')}</div>
-        ${slots.length ? `<div class="slots-list">
-          ${slots.map(sl => `
-            <div class="slot${sl.free > 0 ? '' : ' busy'}" ${sl.free > 0 ? `onclick="bookSlot(${sl.id})"` : ''}>
-              <div>
-                <div class="slot-when">${fmtSlot(sl.slot_at)}</div>
-                ${sl.note ? `<div class="slot-note">${sl.note}</div>` : ''}
-              </div>
-              <div class="slot-free">${sl.free > 0 ? 'Свободно' : 'Занято'}</div>
-            </div>`).join('')}
-        </div>` : `<div class="vid-desc">${txh('iv_no_slots')}</div>`}
+        ${ivPickerHtml(s)}
       </div>
-
-      <div class="vid-warn">${txh('iv_choose_note')}</div>
+      <div class="vid-warn">${txh('iv_choose_note', { hours: s.cutoff_h != null ? s.cutoff_h : 12 })}</div>
       ${ivPrepHtml(s)}
     </div>`;
+  }
   ivPaintCheck(s);
+}
+
+function ivPickDay(day) {
+  ivDay = day;
+  renderSlotStage();
+}
+
+function ivStartReschedule() {
+  ivRescheduling = true;
+  ivDay = null;
+  renderSlotStage();
+  document.getElementById('screen-video').scrollTop = 0;
+}
+
+function ivCancelReschedule() {
+  ivRescheduling = false;
+  renderSlotStage();
+  document.getElementById('screen-video').scrollTop = 0;
+}
+
+// Данные этапа — только с сервера: после записи или переноса слоты поменялись
+async function ivReload() {
+  dropCache('/api/cs');
+  await loadCaseStudy();
+  const updated = (csData.stages || []).find(x => x.id === slotStage.id);
+  if (updated) slotStage = updated;
+}
+
+async function ivPickTime(slotId) {
+  const sl = (slotStage.slots || []).find(x => x.id === slotId);
+  if (!sl) return;
+  const when = fmtSlot(sl.slot_at);
+
+  if (ivRescheduling) {
+    if (!await askConfirm(txt('iv_reschedule_confirm', { when }))) return;
+    try {
+      await apiCall(`/api/cs/stage/${slotStage.id}/reschedule`, {
+        method: 'POST', body: JSON.stringify({ slot_id: slotId })
+      });
+      await ivReload();
+      ivRescheduling = false;
+      renderSlotStage();
+      document.getElementById('screen-video').scrollTop = 0;
+      showSuccess(txt('iv_rescheduled_title'), txt('iv_rescheduled_sub', { when }));
+    } catch (e) {
+      await ivReload();
+      renderSlotStage();
+      showError(e.message);
+    }
+    return;
+  }
+
+  const format = ivFormatKey(sl.format) ? txt(ivFormatKey(sl.format)) : '—';
+  if (!await askConfirm(txt('iv_book_confirm', { when, format }))) return;
+  bookSlot(slotId);
 }
 
 async function bookSlot(slotId) {
@@ -1582,7 +1718,12 @@ async function bookSlot(slotId) {
     exitVideo();
     loadCaseStudy();
     showSuccess(txt('iv_booked_title'), txt('iv_booked_sub', { when: fmtSlot(when) }));
-  } catch (e) { showError(e.message); }
+  } catch (e) {
+    // Время могли занять, пока человек думал, — показываем актуальные слоты
+    await ivReload();
+    renderSlotStage();
+    showError(e.message);
+  }
 }
 
 // Блок «Как подготовиться»: карточки как частые вопросы + чек-лист с галочками.
@@ -1596,11 +1737,7 @@ function ivPrepHtml(s) {
   return `
     <div class="iv-prep">
       <div class="profile-section-title">${txh('iv_prepare_title')}</div>
-      ${cards.length ? `<div class="cs-faq">${cards.map((c, i) => `
-        <div class="cs-qa" id="ivPrep${i}">
-          <div class="cs-q" onclick="document.getElementById('ivPrep${i}').classList.toggle('open')">${esc(c.title)}<div class="cs-q-ic">+</div></div>
-          <div class="cs-a"><div class="cs-a-in"><div class="cs-a-body">${esc(c.text)}</div></div></div>
-        </div>`).join('')}</div>` : ''}
+      ${prepCardsHtml(cards, 'ivPrep')}
       ${check.length ? `<div class="iv-check">
         <div class="iv-check-head"><span>${txh('iv_checklist_title')}</span><span id="ivCheckCount"></span></div>
         ${check.map((item, i) => `
@@ -1610,6 +1747,24 @@ function ivPrepHtml(s) {
         <div class="iv-check-done" id="ivCheckDone" hidden>${txh('iv_checklist_done')}</div>
       </div>` : ''}
     </div>`;
+}
+
+// Раскрывающиеся блоки: видно заголовок, текст по нажатию. Ссылки в тексте кликабельны
+function prepCardsHtml(cards, idPrefix) {
+  if (!cards || !cards.length) return '';
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const linkify = t => esc(t).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)»]/g,
+    u => `<a href="#" class="prep-link" onclick="openExternal('${u.replace(/'/g, '%27')}'); return false;">${u}</a>`);
+  return `<div class="cs-faq prep-cards">${cards.map((c, i) => `
+    <div class="cs-qa" id="${idPrefix}${i}">
+      <div class="cs-q" onclick="document.getElementById('${idPrefix}${i}').classList.toggle('open')">${esc(c.title)}<div class="cs-q-ic">+</div></div>
+      <div class="cs-a"><div class="cs-a-in"><div class="cs-a-body">${linkify(c.text)}</div></div></div>
+    </div>`).join('')}</div>`;
+}
+
+function openExternal(url) {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg && tg.openLink) tg.openLink(url); else window.open(url, '_blank');
 }
 
 function ivCheckKey(stageId) { return 'hscc:ivcheck:' + stageId; }
@@ -1692,11 +1847,12 @@ function renderFormStage() {
   document.getElementById('videoBody').innerHTML = `
     <div class="vid-wrap">
       <div>
-        <div class="eyebrow">Этап отбора</div>
+        <div class="eyebrow">${txh('stage_eyebrow')}</div>
         <div class="vid-title" style="margin-top:7px;">${s.name}</div>
         ${dates ? `<div class="stage-dates" style="margin-top:8px;display:inline-block;">${dates}</div>` : ''}
       </div>
       ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
+      ${prepCardsHtml((s.prep || {}).cards, 'formCard')}
       ${s.link ? `
         <div>
           <button class="btn btn-primary go-form" onclick="openStageLink()">
@@ -1745,39 +1901,37 @@ function renderVideoStage() {
     <div class="vid-wrap">
       <div class="vid-done">
         <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="empty-title">Видео принято</div>
-        <div class="empty-sub">Результаты объявят организаторы — сообщение придёт в бота.</div>
+        <div class="empty-title">${txh('vid_done_title')}</div>
+        <div class="empty-sub">${txh('vid_done_sub')}</div>
         ${s.my_link ? `<div class="vid-link">${s.my_link}</div>` : ''}
       </div>
     </div>` : `
     <div class="vid-wrap">
       <div>
-        <div class="eyebrow">Этап отбора${dates ? ' · ' + dates : ''}</div>
+        <div class="eyebrow">${txh('stage_eyebrow')}${dates ? ' · ' + dates : ''}</div>
         <div class="vid-title" style="margin-top:7px;">${s.name}</div>
       </div>
       ${s.description ? `<div class="vid-desc">${s.description}</div>` : ''}
 
       <div>
-        <div class="profile-section-title">Как сдать</div>
+        <div class="profile-section-title">${txh('vid_how_title')}</div>
         <div class="vid-steps">
-          <div class="vid-step"><div class="vid-step-n">1</div><div>Запишите видео и загрузите его на Google Диск, Яндекс Диск, YouTube или во ВКонтакте.</div></div>
-          <div class="vid-step"><div class="vid-step-n">2</div><div><b>Откройте доступ по ссылке</b> — иначе мы не сможем посмотреть работу.</div></div>
-          <div class="vid-step"><div class="vid-step-n">3</div><div>Вставьте ссылку в поле ниже и нажмите «Отправить».</div></div>
+          ${txt('vid_steps').split('\n').filter(x => x.trim()).map((line, i) => `
+          <div class="vid-step"><div class="vid-step-n">${i + 1}</div><div>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div></div>`).join('')}
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Ссылка на видео</label>
+        <label class="form-label">${txh('vid_link_label')}</label>
         <input class="form-input" id="videoLink" type="url" inputmode="url" placeholder="https://disk.yandex.ru/i/...">
         <div class="form-error" id="videoLinkError"></div>
       </div>
 
       <div class="vid-warn">
-        Отправить можно <b>один раз</b> — заменить ссылку потом не получится.
-        Проверьте, что видео открывается по ссылке в режиме инкогнито.
+        ${txh('vid_warn')}
       </div>
 
-      <button class="btn btn-primary" id="videoSubmitBtn" onclick="submitVideoLink()">Отправить</button>
+      <button class="btn btn-primary" id="videoSubmitBtn" onclick="submitVideoLink()">${txh('vid_submit_btn')}</button>
     </div>`;
 }
 
@@ -1790,7 +1944,7 @@ async function submitVideoLink() {
   const input = document.getElementById('videoLink');
   const link = input.value.trim();
   if (!/^https?:\/\/.+\..+/.test(link)) {
-    setFieldError('videoLink', 'videoLinkError', 'Вставьте ссылку целиком — начиная с https://');
+    setFieldError('videoLink', 'videoLinkError', txt('vid_bad_link'));
     return;
   }
   setFieldError('videoLink', 'videoLinkError', null);
@@ -1807,9 +1961,9 @@ async function submitVideoLink() {
     videoStage.my_link = link;
     renderVideoStage();
     loadCaseStudy();
-    showSuccess('Видео отправлено!', 'Организаторы посмотрят работу и сообщат результат в бота.');
+    showSuccess(txt('vid_sent_title'), txt('vid_sent_sub'));
   } catch (e) {
-    btn.textContent = 'Отправить';
+    btn.textContent = txt('vid_submit_btn');
     btn.disabled = false;
     showError(e.message);
   }
@@ -2078,7 +2232,7 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Что это такое</div>
+        <div class="cs-h2">${txh('cs_h_about')}</div>
         <div class="cs-lead" style="margin-top:10px;">${CS.about || csData.info || ''}</div>
       </div>
 
@@ -2091,7 +2245,7 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Что тебя ждёт</div>
+        <div class="cs-h2">${txh('cs_h_benefits')}</div>
         <div class="cs-tiles" style="margin-top:12px;">
           ${(CS.benefits || []).map(b => `
             <div class="cs-tile">
@@ -2118,8 +2272,8 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Результаты учеников</div>
-        <div class="cs-note" style="margin:8px 0 4px;">Наши ученики — главный показатель того, как работает программа.</div>
+        <div class="cs-h2">${txh('cs_h_wins')}</div>
+        <div class="cs-note" style="margin:8px 0 4px;">${txh('cs_wins_note')}</div>
         <div class="cs-wins">
           ${(CS.wins || []).map(w => `
             <div class="cs-win"><div class="cs-win-ic">${w.icon || '•'}</div><div>${w.text}</div></div>`).join('')}
@@ -2127,13 +2281,13 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Как это было</div>
-        <div class="cs-note" style="margin:8px 0 12px;">Занятия, финалы и наши команды на чемпионатах.</div>
+        <div class="cs-h2">${txh('cs_h_gallery')}</div>
+        <div class="cs-note" style="margin:8px 0 12px;">${txh('cs_gallery_note')}</div>
         <div class="cs-gallery" id="csGallery" onscroll="csSyncDots()">
           ${(CS.photos.length ? CS.photos : [null, null, null]).map(p => `
             <div class="cs-shot">
               ${p ? `<img data-cs-src="${p.src}" alt="${p.caption || ''}">${p.caption ? `<div class="cs-shot-cap">${p.caption}</div>` : ''}`
-                  : `<div class="cs-shot-stub"><span>Фото скоро</span></div>`}
+                  : `<div class="cs-shot-stub"><span>${txh('cs_gallery_stub')}</span></div>`}
             </div>`).join('')}
         </div>
         <div class="cs-dots" id="csDots">
@@ -2142,7 +2296,7 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Как попасть</div>
+        <div class="cs-h2">${txh('cs_h_steps')}</div>
         <div class="cs-steps" style="margin-top:8px;">
           ${(CS.steps || []).map((s, i) => `
             <div class="cs-step">
@@ -2153,7 +2307,7 @@ function renderCs() {
       </div>
 
       <div>
-        <div class="cs-h2">Частые вопросы</div>
+        <div class="cs-h2">${txh('cs_h_faq')}</div>
         <div class="cs-faq" style="margin-top:12px;">
           ${CS.faq.map((f, i) => `
             <div class="cs-qa" id="csQa${i}">
@@ -2238,7 +2392,7 @@ function csPaintWants() {
 
 function csPhotoFallback(img) {
   const shot = img.closest('.cs-shot');
-  if (shot) shot.innerHTML = '<div class="cs-shot-stub"><span>Фото скоро</span></div>';
+  if (shot) shot.innerHTML = `<div class="cs-shot-stub"><span>${txh('cs_gallery_stub')}</span></div>`;
 }
 
 // Фото галереи грузим через fetch+blob — так же, как баннеры мероприятий
