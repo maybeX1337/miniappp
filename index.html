@@ -517,8 +517,8 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <div class="onb-icon">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
     </div>
-    <div class="onb-title">Заполните профиль</div>
-    <div class="onb-sub">Это нужно один раз. После регистрация на любое мероприятие — в один клик.</div>
+    <div class="onb-title" data-tx="onb_title">Заполните профиль</div>
+    <div class="onb-sub" data-tx="onb_sub">Это нужно один раз. После регистрация на любое мероприятие — в один клик.</div>
   </div>
   <div class="form-body">
     <div class="form-group">
@@ -686,7 +686,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
     <button class="btn btn-primary" id="confirmBtn" onclick="confirmRegistration()" style="margin-top:8px;">
       Подтвердить регистрацию
     </button>
-    <div class="form-hint" style="text-align:center;">
+    <div class="form-hint" style="text-align:center;" data-tx="ev_confirm_hint">
       Хотите указать другие данные? Перейдите во вкладку «Профиль» и нажмите «Изменить».
     </div>
   </div>
@@ -764,7 +764,7 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
   </div>
   <div class="form-header">
     <div class="form-title">Редактирование профиля</div>
-    <div class="form-subtitle" style="margin-top:8px;">Обновите данные — они сохранятся для всех будущих регистраций.</div>
+    <div class="form-subtitle" style="margin-top:8px;" data-tx="profile_edit_sub">Обновите данные — они сохранятся для всех будущих регистраций.</div>
   </div>
   <div class="form-body">
     <div class="form-group">
@@ -1051,7 +1051,14 @@ function txh(key, vars) {
 }
 
 async function loadTexts() {
-  const apply = d => { TXT = d || {}; };
+  const apply = d => {
+    TXT = d || {};
+    // Постоянные надписи в разметке: data-tx="ключ" — подменяем на текст из «Тексты»
+    document.querySelectorAll('[data-tx]').forEach(el => {
+      const v = txt(el.dataset.tx);
+      if (v) el.textContent = v;
+    });
+  };
   const hit = readCache('/api/texts');
   if (hit) {
     // Из кэша — сразу, свежие подтянутся в фоне
@@ -1495,13 +1502,13 @@ function csStageCard(s, i, withProgress) {
     if (s.submitted && !res) {
       if (s.kind === 'interview' && s.my_slot) {
         // Записался — но экран этапа остаётся открытым: там памятка и отмена
-        action = `<div class="stage-lock">🗓 Вы записаны: ${fmtSlot(s.my_slot)}</div>`
+        action = `<div class="stage-lock">${txh('stage_booked', { when: fmtSlot(s.my_slot) })}</div>`
           + (s.can_view
             ? `<button class="stage-open-btn" onclick="openSlotStage(${s.id})">${
                 s.can_cancel ? txh('iv_card_memo_cancel') : txh('iv_card_memo')}</button>`
             : '');
       } else {
-        action = '<div class="stage-lock">✓ Ответы отправлены, ждём результатов</div>';
+        action = `<div class="stage-lock">${txh('stage_sent')}</div>`;
       }
     } else if (current) {
       action = s.kind === 'interview'
@@ -1514,14 +1521,14 @@ function csStageCard(s, i, withProgress) {
           ? (s.test_started
               ? `<button class="stage-open-btn" onclick="openTest(${s.id})">${txh('test_continue_btn')}</button>`
               : `<button class="stage-open-btn" onclick="askStartTest(${s.id})">${txh('test_open_btn')}</button>`)
-          : (s.link ? `<a class="stage-link" href="${s.link}" target="_blank">Перейти к этапу</a>` : '');
+          : (s.link ? `<a class="stage-link" href="${s.link}" target="_blank">${txh('stage_link_btn')}</a>` : '');
     } else if (locked && !res) {
       action = `<div class="stage-lock">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-        ${csData.joined ? 'Откроется после предыдущего этапа' : 'Сначала подайте заявку'}
+        ${csData.joined ? txh('stage_locked_prev') : txh('stage_locked_join')}
       </div>`;
     } else if (s.status === 'upcoming' && !res) {
-      action = `<div class="stage-lock">Откроется ${s.date_start_display || 'позже'}</div>`;
+      action = `<div class="stage-lock">${txh('stage_opens', { date: s.date_start_display || 'позже' })}</div>`;
     }
   }
 
@@ -2095,7 +2102,7 @@ function renderTest(showMissing) {
         </div>
       </div>`;
     }).join('')}
-    <div class="test-note">Если ответа на вопрос нет — можно пропустить, он просто не принесёт баллов. Отправить ответы можно один раз.</div>
+    <div class="test-note">${txh('test_skip_note')}</div>
     <div class="test-nav">
       ${testBlockIdx > 0 ? '<button class="btn btn-ghost" onclick="testPrev()">Назад</button>' : ''}
       ${isLast
@@ -2936,8 +2943,8 @@ async function loadTickets() {
           </svg>
         </div>
         <div>
-          <div class="notice-t">Возьмите паспорт</div>
-          <div class="notice-d">Вы не студент ВШЭ, поэтому на входе в здание нужен документ. QR-код для прохода придёт на вашу почту.</div>
+          <div class="notice-t">${txh('my_passport_title')}</div>
+          <div class="notice-d">${txh('my_passport_text')}</div>
         </div>
       </div>` : ''}
 
@@ -3017,7 +3024,7 @@ async function loadProfile() {
     if (upcoming.length === 0) {
       upcomingWrap.innerHTML = `
         <div class="profile-section-title">Ближайшее мероприятие</div>
-        <div style="font-size:13px;color:var(--text-sec);line-height:1.6;padding:0 2px;">Вы пока никуда не записаны. Загляните во вкладку «События» — там вся афиша клуба.</div>`;
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.6;padding:0 2px;">${txh('profile_no_upcoming')}</div>`;
     } else {
       const r = upcoming[0];
       const d = daysUntil(r.date);
