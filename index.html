@@ -293,7 +293,6 @@ html, body { height: 100%; font-family: 'Onest', sans-serif; background: var(--b
 .iv-time:active { transform: scale(.96); border-color: var(--accent); }
 .iv-time b { font-size: 15.5px; font-weight: 750; font-variant-numeric: tabular-nums; }
 .iv-time span { font-size: 10.5px; font-weight: 650; color: var(--accent); }
-.iv-link-btn { margin-top: 4px; }
 .prep-cards .cs-a-body { white-space: pre-line; }
 .prep-link { color: var(--accent); font-weight: 600; word-break: break-all; }
 .iv-check { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
@@ -1574,21 +1573,18 @@ function openSlotStage(stageId) {
   document.getElementById('screen-video').scrollTop = 0;
 }
 
-// Свободное время по дням. Одно время в одном формате — одна кнопка,
-// даже если в это время свободны несколько интервьюеров: сервер сам назначит любого
+// Свободное время по дням. Одно время — одна кнопка, даже если в это время свободны
+// несколько интервьюеров: сервер сам назначит любого
 function ivFreeByDay(s) {
   const days = new Map();
   (s.slots || []).filter(x => x.free > 0 && x.slot_at !== s.my_slot).forEach(x => {
     const [d, t] = x.slot_at.split(' ');
     if (!days.has(d)) days.set(d, new Map());
-    const key = t + '|' + (x.format || '');
-    if (!days.get(d).has(key)) days.get(d).set(key, { time: t, format: x.format || '', slotId: x.id });
+    if (!days.get(d).has(t)) days.get(d).set(t, { time: t, slotId: x.id });
   });
   return [...days.entries()].sort(([a], [b]) => a.localeCompare(b))
     .map(([day, m]) => ({ day, times: [...m.values()].sort((a, b) => a.time.localeCompare(b.time)) }));
 }
-
-function ivFormatKey(f) { return f === 'offline' ? 'iv_format_offline' : f === 'online' ? 'iv_format_online' : ''; }
 
 function ivPickerHtml(s) {
   const days = ivFreeByDay(s);
@@ -1605,23 +1601,8 @@ function ivPickerHtml(s) {
     }).join('')}</div>
     <div class="iv-times">${current.times.map(t => `
       <button class="iv-time" onclick="ivPickTime(${t.slotId})">
-        <b>${t.time}</b>${ivFormatKey(t.format) ? `<span>${txh(ivFormatKey(t.format))}</span>` : ''}
+        <b>${t.time}</b>
       </button>`).join('')}</div>`;
-}
-
-// Где пройдёт интервью — видно только после записи
-function ivPlaceHtml(s) {
-  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  if (s.my_format === 'online') {
-    if (/^https?:\/\//.test(s.my_place || '')) {
-      return `<button class="btn btn-primary iv-link-btn" data-url="${esc(s.my_place)}" onclick="openExternal(this.dataset.url)">${txh('iv_place_link_btn')}</button>`;
-    }
-    return `<div class="empty-sub">${s.my_place ? esc(s.my_place) : txh('iv_place_no_link')}</div>`;
-  }
-  if (s.my_format === 'offline') {
-    return `<div class="empty-sub">${s.my_place ? txh('iv_place_offline', { place: s.my_place }) : txh('iv_place_offline_empty')}</div>`;
-  }
-  return '';
 }
 
 function renderSlotStage() {
@@ -1639,8 +1620,7 @@ function renderSlotStage() {
       <div class="vid-done">
         <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="empty-title">${txh('iv_done_title')}</div>
-        <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b>${ivFormatKey(s.my_format) ? ' · ' + txh(ivFormatKey(s.my_format)) : ''}</div>
-        ${ivPlaceHtml(s)}
+        <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
         <div class="empty-sub">${txh('iv_done_sub')}</div>
       </div>
 
@@ -1732,8 +1712,7 @@ async function ivPickTime(slotId) {
     return;
   }
 
-  const format = ivFormatKey(sl.format) ? txt(ivFormatKey(sl.format)) : '—';
-  if (!await askConfirm(txt('iv_book_confirm', { when, format }))) return;
+  if (!await askConfirm(txt('iv_book_confirm', { when }))) return;
   bookSlot(slotId);
 }
 
