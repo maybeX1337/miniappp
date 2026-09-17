@@ -1621,6 +1621,8 @@ function renderSlotStage() {
         <div class="vid-done-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="empty-title">${txh('iv_done_title')}</div>
         <div class="empty-sub"><b>${fmtSlot(s.my_slot)}</b></div>
+        ${s.my_interviewer_tg ? `<div class="empty-sub iv-interviewer">${txh('iv_interviewer', { nick: '\u0000' })
+          .replace('\u0000', `<a href="#" onclick="openInterviewerChat(); return false;">@${s.my_interviewer_tg.replace(/[^A-Za-z0-9_]/g, '')}</a>`)}</div>` : ''}
         <div class="empty-sub">${txh('iv_done_sub')}</div>
       </div>
 
@@ -2524,6 +2526,16 @@ async function csApplyConfirm() {
 }
 
 // Ссылка на закрытый чат: через Telegram, чтобы не открывался браузер
+// Чат с интервьюером: ник приходит только тому, кто к нему записан
+function openInterviewerChat() {
+  const nick = (slotStage && slotStage.my_interviewer_tg || '').replace(/[^A-Za-z0-9_]/g, '');
+  if (!nick) return;
+  const url = 'https://t.me/' + nick;
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+  else window.open(url, '_blank');
+}
+
 function openChatLink() {
   const url = csData && csData.chat_link;
   if (!url) return;
